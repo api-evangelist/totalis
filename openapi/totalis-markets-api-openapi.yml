@@ -1,0 +1,540 @@
+openapi: 3.0.3
+info:
+  title: Totalis RFQ API Keys Markets API
+  version: 2.1.0
+  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
+
+
+    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
+
+
+    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
+
+
+    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
+
+
+    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+servers:
+- url: https://api.totalis.trade
+  description: Production
+security:
+- ApiKey: []
+tags:
+- name: Markets
+  description: Cached Kalshi and Polymarket market data.
+paths:
+  /markets:
+    get:
+      operationId: listMarkets
+      summary: List Markets
+      description: 'List active markets grouped by event across supported venues (Kalshi and Polymarket). Filters: `category`, `venue`, `subcategory` (validated against the selected category), `frequency` (`daily`/`weekly`/`monthly`/`hourly`), `date_filter` (time bucket), and `search`. Pagination is cursor-based at the event level. The response includes `available_subcategories` and `available_frequencies` so clients can drive filter chips from the same result set.'
+      tags:
+      - Markets
+      security: []
+      parameters:
+      - name: category
+        in: query
+        description: Filter by category. Pass `all` to disable the default category filter.
+        schema:
+          type: string
+          enum:
+          - politics
+          - sports
+          - crypto
+          - finance
+          - economics
+          - entertainment
+          - weather
+          - tech
+          - all
+      - name: venue
+        in: query
+        description: Filter by venue. Omit to include all venues.
+        schema:
+          $ref: '#/components/schemas/Venue'
+      - name: subcategory
+        in: query
+        description: Filter events by subcategory. Valid values depend on the selected `category` (requires `category` to also be set).
+        schema:
+          $ref: '#/components/schemas/SubcategorySlug'
+      - name: frequency
+        in: query
+        description: Filter events by the cadence of the underlying series. `other` is intentionally rejected — it's a residual response bucket, not a filter target.
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - hourly
+      - name: date_filter
+        in: query
+        description: Time bucket filter. If omitted, a default 7-day horizon is applied. Pass `all` to retrieve all active markets regardless of close date.
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 1h-1d
+          - 1d-7d
+          - today
+          - this_week
+          - this_month
+          - all
+      - name: search
+        in: query
+        description: Full-text search across event/market titles.
+        schema:
+          type: string
+      - $ref: '#/components/parameters/CursorParam'
+      - name: limit
+        in: query
+        description: Events per page. Default 21, max 100. The product `limit × markets_per_event` must not exceed 2000.
+        schema:
+          type: integer
+          default: 21
+          minimum: 1
+          maximum: 100
+      - name: markets_per_event
+        in: query
+        description: Max markets returned per event group. Default 10, max 50.
+        schema:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+      responses:
+        '200':
+          description: Events grouped by event_ticker, plus subcategory/frequency facets for the current result set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventGroup'
+                  meta:
+                    allOf:
+                    - $ref: '#/components/schemas/PaginationMeta'
+                    - type: object
+                      properties:
+                        total_events:
+                          type: integer
+                        available_subcategories:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/SubcategorySlug'
+                        available_frequencies:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                            - daily
+                            - weekly
+                            - monthly
+                            - hourly
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/markets/list:
+    get:
+      operationId: listMarketsFlat
+      security: []
+      tags:
+      - Markets
+      summary: List markets (flat)
+      description: 'Returns a paginated list of individual markets, most-traded first. Unlike the event-grouped `GET /markets`, results aren''t grouped by event and are never capped per event, so every market is reachable. Filter by venue, category, subcategory, or one or more series.
+
+
+        Paginate with `cursor` until it returns `null`; `meta.total` is the total number of matches. For a complete sync, de-duplicate by `ticker` — markets with equal volume aren''t guaranteed a stable order between requests. Scoping to a `subcategory` or `series_ticker` set avoids this entirely.'
+      parameters:
+      - name: category
+        in: query
+        description: Filter by category, e.g. `sports` or `crypto`.
+        schema:
+          type: string
+          enum:
+          - crypto
+          - economics
+          - finance
+          - sports
+          - politics
+          - tech
+          - entertainment
+          - weather
+          - all
+      - name: venue
+        in: query
+        description: 'Filter by venue: `kalshi` or `polymarket`.'
+        schema:
+          $ref: '#/components/schemas/Venue'
+      - name: subcategory
+        in: query
+        description: Filter by subcategory, e.g. `world_cup`. Requires `category`.
+        schema:
+          $ref: '#/components/schemas/SubcategorySlug'
+      - name: frequency
+        in: query
+        description: 'Filter by series cadence: `daily`, `weekly`, `monthly`, or `hourly`.'
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - hourly
+      - name: series_ticker
+        in: query
+        description: Filter by one or more series, comma-separated and case-sensitive, e.g. `KXWCAST,KXWCTCORNERS`. Up to 100.
+        schema:
+          type: string
+      - name: status
+        in: query
+        description: Filter by status. Defaults to tradeable markets (`active,open`); pass a comma-separated list of `active`, `open`, `closed`, `settled`, `finalized`, or `all`. An empty or unrecognised value returns 400.
+        schema:
+          type: string
+          default: active,open
+      - $ref: '#/components/parameters/CursorParam'
+      - name: limit
+        in: query
+        description: Number of markets per page, from 1 to 500. Defaults to 100. Only the first 10,000 matches are reachable — narrow the filters to page further.
+        schema:
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=15, stale-while-revalidate=60
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - markets
+                    properties:
+                      markets:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Market'
+                  meta:
+                    allOf:
+                    - $ref: '#/components/schemas/PaginationMeta'
+                    - type: object
+                      properties:
+                        total:
+                          type: integer
+                          description: Total markets matching the filters across all pages.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          description: Market index unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /markets/{ticker}:
+    get:
+      operationId: getMarket
+      summary: Get Market
+      description: Fetch a single Kalshi market by ticker or a single Polymarket market by condition ID. When `venue` is omitted, the API infers Polymarket for condition IDs that look like `0x...`; otherwise it looks up the market as Kalshi.
+      tags:
+      - Markets
+      security: []
+      parameters:
+      - name: ticker
+        in: path
+        required: true
+        description: Kalshi market ticker or Polymarket `condition_id`.
+        schema:
+          type: string
+          maxLength: 160
+          pattern: ^[A-Za-z0-9_.:-]+$
+      - name: venue
+        in: query
+        required: false
+        description: Optional venue hint. Use this when the caller already knows whether the ticker belongs to Kalshi or Polymarket.
+        schema:
+          $ref: '#/components/schemas/Venue'
+      responses:
+        '200':
+          description: Market details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Market'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    Venue:
+      type: string
+      enum:
+      - kalshi
+      - polymarket
+      description: Source venue for a market.
+    PaginationMeta:
+      type: object
+      properties:
+        cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+        limit:
+          type: integer
+          description: Maximum number of items requested for this page.
+        offset:
+          type: integer
+          description: Number of items skipped before this page.
+        total:
+          type: integer
+          description: Total number of items available across all pages, when returned by the endpoint.
+    SubcategorySlug:
+      type: string
+      description: Subcategory wire format (lowercase snake_case). Valid values depend on the selected `category` and are enforced server-side.
+      enum:
+      - nba
+      - ncaa
+      - nfl
+      - nhl
+      - mlb
+      - ufc
+      - lol
+      - epl
+      - efl
+      - la_liga
+      - world_cup
+      - bundesliga
+      - liga_portugal
+      - ligue_1
+      - f1
+      - ipl
+      - btc
+      - eth
+      - sol
+      - stocks
+      - indices
+      - etfs
+      - earnings
+      - rates
+      - inflation
+      - commodities
+      - fx
+      - jobs
+      - ai
+      - companies
+      - other
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    EventGroup:
+      type: object
+      required:
+      - event_ticker
+      - series_ticker
+      - category
+      - total_markets
+      - markets
+      properties:
+        event_ticker:
+          type: string
+          description: 'Event identifier. **Kalshi**: event ticker (e.g. `KXBTC-25FEB07`). **Polymarket**: Gamma `event_slug` (falls back to `market_slug` when no parent event exists).'
+        series_ticker:
+          type: string
+          description: 'Series identifier. **Kalshi**: series ticker (e.g. `KXBTC`). **Polymarket**: Gamma `market_slug`.'
+        series_title:
+          type: string
+          nullable: true
+        event_title:
+          type: string
+          nullable: true
+        event_sub_title:
+          type: string
+          nullable: true
+        category:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        total_markets:
+          type: integer
+        markets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Market'
+    Market:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: 'Unique market identifier on its venue. **Kalshi**: market ticker (e.g. `KXBTC-25FEB07-T100000`). **Polymarket**: `condition_id`, the 0x-prefixed hex string from Polymarket''s CTF (e.g. `0x4d2…`); not the gamma id, question id, or market slug. Yes/no CLOB token ids are not returned by this API.'
+        event_ticker:
+          type: string
+          description: 'Event identifier the market belongs to. **Kalshi**: event ticker (e.g. `KXBTC-25FEB07`). **Polymarket**: Gamma `event_slug` (falls back to `market_slug` when no parent event exists).'
+        series_ticker:
+          type: string
+          description: 'Series identifier the event belongs to. **Kalshi**: series ticker (e.g. `KXBTC`). **Polymarket**: Gamma `market_slug` — Polymarket has no native series concept, so we key whitelisting on the market slug.'
+        title:
+          type: string
+        subtitle:
+          type: string
+          nullable: true
+        yes_sub_title:
+          type: string
+          nullable: true
+        no_sub_title:
+          type: string
+          nullable: true
+        bet_group:
+          type: string
+          nullable: true
+          description: 'Polymarket-only: section label for the row (e.g. "Match O/U 21.5"). Always null on Kalshi rows.'
+        category:
+          type: string
+        subcategory:
+          type: string
+          nullable: true
+        frequency:
+          type: string
+          nullable: true
+          description: 'Cadence of the underlying series: daily/weekly/monthly/hourly/other. Null for categories without timeframe pills.'
+        venue:
+          $ref: '#/components/schemas/Venue'
+        status:
+          type: string
+        yes_bid:
+          type: number
+        yes_ask:
+          type: number
+        no_bid:
+          type: number
+        no_ask:
+          type: number
+        last_price:
+          type: number
+        price_to_beat:
+          type: number
+          nullable: true
+          description: Reference price for Polymarket up/down markets. Null on Kalshi and on non-up/down Polymarket markets.
+        volume:
+          type: integer
+        volume_24h:
+          type: integer
+        open_interest:
+          type: integer
+        venue_url:
+          type: string
+          nullable: true
+          description: Canonical market URL on its source venue.
+        open_time:
+          type: string
+          format: date-time
+        close_time:
+          type: string
+          format: date-time
+        expiration_time:
+          type: string
+          format: date-time
+        exclusion_keys:
+          type: array
+          items:
+            type: string
+          description: Parlay-correlation keys. Two markets **cannot co-exist in the same parlay if (and only if) their `exclusion_keys` arrays intersect** — i.e. share at least one string. Apply a pure set-intersection; there is no rule table to maintain client-side. The keys encode every correlation rule (cross-series exclusion groups, threshold ladders, same-game sports family/kind/participant correlation, Polymarket sub-events). Keys are opaque and namespaced by reason and scope (e.g. `kp:<gameKey>:moneyline|spread`, `grp:<idx>:<eventKey>`, `fam:<gameKey>:<series>`), and are derived solely from the market itself, so a selected leg can snapshot its keys and compare them later. The plain one-leg-per-event rule (same `event_ticker`) is intentionally not encoded here. Always present; an empty array means the market participates in no correlation rule.
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type: integer
+          nullable: true
+          description: Seconds until retry; set on 429 responses.
+  responses:
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  parameters:
+    CursorParam:
+      name: cursor
+      in: query
+      description: Opaque pagination cursor from a previous response's `meta.cursor`. Do not construct manually.
+      schema:
+        type: string
+  securitySchemes:
+    PrivyJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Privy JWT issued to the web dashboard. Sent as `Authorization: Bearer <jwt>`. The Privy session signer underpins all wallet-signed actions.'
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 'Programmatic API key. Sent as `X-API-Key: <key>`. Generate one from the Totalis dashboard. The same header is accepted on the WebSocket auth message.'

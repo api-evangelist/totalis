@@ -1,0 +1,341 @@
+openapi: 3.0.3
+info:
+  title: Totalis RFQ API Keys Webhooks API
+  version: 2.1.0
+  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
+
+
+    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
+
+
+    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
+
+
+    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
+
+
+    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+servers:
+- url: https://api.totalis.trade
+  description: Production
+security:
+- ApiKey: []
+tags:
+- name: Webhooks
+paths:
+  /v1/webhooks:
+    get:
+      operationId: getWebhookConfig
+      tags:
+      - Webhooks
+      summary: Get webhook config
+      description: Returns the current webhook endpoint config (or nulls if never configured) plus the subscribable event catalog. The signing secret is never returned — only whether one is set.
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: owner_kind
+        in: query
+        description: 'Which endpoint to address: `user` (default) or `mm` (market-maker).'
+        schema:
+          type: string
+          enum:
+          - user
+          - mm
+          default: user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WebhookConfig'
+    put:
+      operationId: setWebhookConfig
+      tags:
+      - Webhooks
+      summary: Set webhook config
+      description: Replace the endpoint URL and subscribed events. Preserves the signing secret. A fresh endpoint is undeliverable until a secret is set (see rotate-secret).
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: owner_kind
+        in: query
+        description: 'Which endpoint to address: `user` (default) or `mm` (market-maker).'
+        schema:
+          type: string
+          enum:
+          - user
+          - mm
+          default: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookConfigInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WebhookConfig'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /v1/webhooks/rotate-secret:
+    post:
+      operationId: rotateWebhookSecret
+      tags:
+      - Webhooks
+      summary: Rotate signing secret
+      description: Mint a fresh HMAC signing secret, returned ONCE (stored encrypted, never retrievable again). Requires an existing endpoint (set a URL first). Deliveries signed with the old secret stop verifying immediately.
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: owner_kind
+        in: query
+        description: 'Which endpoint to address: `user` (default) or `mm` (market-maker).'
+        schema:
+          type: string
+          enum:
+          - user
+          - mm
+          default: user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      signing_secret:
+                        type: string
+                        description: The new secret (`whsec_…`). Shown only once.
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/webhooks/deliveries:
+    get:
+      operationId: listWebhookDeliveries
+      tags:
+      - Webhooks
+      summary: List recent deliveries
+      description: Recent delivery attempts (status/attempt metadata, newest first). Empty if no endpoint is configured.
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: owner_kind
+        in: query
+        description: 'Which endpoint to address: `user` (default) or `mm` (market-maker).'
+        schema:
+          type: string
+          enum:
+          - user
+          - mm
+          default: user
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      deliveries:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WebhookDelivery'
+  /v1/webhooks/deliveries/{id}/redeliver:
+    post:
+      operationId: redeliverWebhookDelivery
+      tags:
+      - Webhooks
+      summary: Replay a delivery
+      description: Re-queue a settled (delivered or dead_letter) delivery, scoped to your own endpoint. Replays reuse the same X-Totalis-Event-Id.
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: owner_kind
+        in: query
+        description: 'Which endpoint to address: `user` (default) or `mm` (market-maker).'
+        schema:
+          type: string
+          enum:
+          - user
+          - mm
+          default: user
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      requeued:
+                        type: boolean
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    WebhookConfig:
+      type: object
+      properties:
+        owner_kind:
+          type: string
+          enum:
+          - user
+          - mm
+        url:
+          type: string
+          nullable: true
+          description: Configured HTTPS endpoint, or null if never set.
+        events:
+          type: array
+          items:
+            type: string
+          description: Subscribed event names.
+        status:
+          type: string
+          nullable: true
+          description: Endpoint status, or null if never configured.
+        has_signing_secret:
+          type: boolean
+          description: Whether a signing secret is set (deliveries require one).
+        event_catalog:
+          type: array
+          items:
+            type: string
+          description: The events this endpoint kind may subscribe to. (GET only.)
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    WebhookDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - failed
+          - delivered
+          - dead_letter
+        attempts:
+          type: integer
+        response_code:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    WebhookConfigInput:
+      type: object
+      required:
+      - url
+      - events
+      properties:
+        url:
+          type: string
+          description: HTTPS endpoint. Must not resolve to private/internal infrastructure.
+        events:
+          type: array
+          items:
+            type: string
+          description: Event names to subscribe to (subset of the catalog). Empty parks the endpoint.
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type: integer
+          nullable: true
+          description: Seconds until retry; set on 429 responses.
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+  securitySchemes:
+    PrivyJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Privy JWT issued to the web dashboard. Sent as `Authorization: Bearer <jwt>`. The Privy session signer underpins all wallet-signed actions.'
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 'Programmatic API key. Sent as `X-API-Key: <key>`. Generate one from the Totalis dashboard. The same header is accepted on the WebSocket auth message.'

@@ -1,0 +1,891 @@
+openapi: 3.0.3
+info:
+  title: Totalis RFQ API Keys User API
+  version: 2.1.0
+  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
+
+
+    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
+
+
+    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
+
+
+    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
+
+
+    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+servers:
+- url: https://api.totalis.trade
+  description: Production
+security:
+- ApiKey: []
+tags:
+- name: User
+  description: User profile, wallet, and devnet helpers.
+paths:
+  /v1/me:
+    get:
+      operationId: getOrCreateUser
+      summary: Get Profile
+      description: 'Get the authenticated user''s profile. Auto-creates a user record on first call. Pass `?ref=<invite-code>` on first login to auto-redeem an invite code; when redemption succeeds the response includes `auto_redeemed: true` and, where configured, an `airdrop` outcome.'
+      tags:
+      - User
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: ref
+        in: query
+        description: Referral / invite code to auto-redeem on first login.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/username:
+    put:
+      operationId: updateUsername
+      summary: Update Username
+      description: Change the authenticated user's display name. Must be 3–20 characters, alphanumeric and underscores only.
+      tags:
+      - User
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - username
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  pattern: ^[a-zA-Z0-9_]+$
+                  description: New username (3–20 chars, alphanumeric + underscores).
+            example:
+              username: trader_123
+      responses:
+        '200':
+          description: Username updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /v1/username/check:
+    get:
+      operationId: checkUsername
+      summary: Check Username
+      description: Check whether a username is available. Must match 3–20 chars, alphanumeric + underscores.
+      tags:
+      - User
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: username
+        in: query
+        required: true
+        description: Candidate username.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Availability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      available:
+                        type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/wallet:
+    get:
+      operationId: getWallet
+      summary: Get Wallet
+      description: Get the authenticated user's embedded Solana wallet address, wallet/vault balances, and the aggregated `locked_amount` across active RFQs and vault positions.
+      tags:
+      - User
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      responses:
+        '200':
+          description: Wallet snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Wallet'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/wallet/blockhash:
+    get:
+      operationId: getBlockhash
+      summary: Get Blockhash
+      description: Latest Solana blockhash for client-side transaction construction. Useful for browser clients that do not have direct RPC access.
+      tags:
+      - User
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      responses:
+        '200':
+          description: Latest blockhash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - blockhash
+                    - last_valid_block_height
+                    properties:
+                      blockhash:
+                        type: string
+                      last_valid_block_height:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/wallet/submit-tx:
+    post:
+      operationId: submitTransaction
+      summary: Submit Transaction
+      description: Submit a client-signed serialized Solana transaction. Used for wallet delegation and other user-signed flows from browser clients without direct RPC access. Rate-limited to 10 requests/minute.
+      tags:
+      - User
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - transaction
+              properties:
+                transaction:
+                  type: string
+                  description: Base64-encoded serialized Solana transaction.
+            example:
+              transaction: AQAAAA...
+      responses:
+        '200':
+          description: Transaction broadcast
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                    - signature
+                    properties:
+                      signature:
+                        type: string
+                        description: Solana transaction signature.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /v1/portfolio:
+    get:
+      operationId: getUserPortfolio
+      tags:
+      - User
+      summary: Consolidated portfolio (balance, stats, counts, summary)
+      description: 'Returns the user''s full portfolio in a single batched query: vault balance,
+
+        trading stats, RFQ status counts, and active-bet summary. Balance is null
+
+        when the user has no vault (never traded).
+
+        '
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PortfolioData'
+  /v1/wallet/delegation-status:
+    get:
+      operationId: getDelegationStatus
+      tags:
+      - User
+      summary: Check TEE wallet delegation status
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DelegationStatus'
+  /v1/wallet/enable-trading:
+    post:
+      operationId: enableTrading
+      tags:
+      - User
+      summary: Confirm TEE wallet delegation AND drain any pending welcome airdrop
+      description: "Two responsibilities, kept in one round-trip so the frontend can\nrender a single combined success toast:\n\n1. **Delegation status.** Confirms whether the embedded wallet\n   is currently delegated to our key quorum. The actual\n   delegation is a USER-SIDE action (frontend `addSigners()`);\n   this endpoint only reads the current state — it does NOT\n   perform the delegation itself.\n2. **Pending welcome-airdrop drain.** Under the deferred-airdrop\n   flow (TT-airdrop-bug 2026-05-13), the welcome airdrop amount\n   is staged on `users.welcome_airdrop_pending_amount` at\n   approval time. This endpoint atomically claims that amount,\n   mints the USDC from treasury to the canonical wallet, and\n   clears the column. Idempotent: a second call after a\n   successful drain returns `airdrop: null` (nothing left to\n   drain) without re-minting. On mint failure, the pending\n   amount is restored so the user can retry on their next call.\n"
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/DelegationStatus'
+                    - type: object
+                      properties:
+                        airdrop:
+                          allOf:
+                          - $ref: '#/components/schemas/AirdropDrainOutcome'
+                          nullable: true
+                          description: 'Outcome of the pending-airdrop drain.
+
+                            `null` when nothing was staged for this
+
+                            user (most common — pre-approval, or
+
+                            already drained on a prior call). See
+
+                            `AirdropDrainOutcome` for the non-null
+
+                            shape.
+
+                            '
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/wallet/withdraw:
+    post:
+      operationId: withdrawFromWallet
+      tags:
+      - User
+      summary: Withdraw USDC from the embedded wallet to an external address
+      description: 'Sends USDC out of the caller''s embedded wallet ATA to an arbitrary
+
+        on-curve Solana address. Uses Privy''s session-signer delegation
+
+        (set up via /v1/wallet/enable-trading) and Privy''s native gas
+
+        sponsorship — the user is not prompted to sign and never needs SOL.
+
+
+        Chained vault-tap: when the requested `amount_usdc` exceeds the
+
+        caller''s ATA-available balance, the handler first issues
+
+        `withdraw_from_vault` (vault PDA → owner ATA) for the shortfall,
+
+        waits for that TX to confirm, then issues the external SPL transfer.
+
+        The `vault_signature` / `vault_amount` fields surface the intermediate
+
+        TX when this happens. If the vault tap succeeds but the external
+
+        transfer fails to construct or broadcast, the response is **502**
+
+        with `error.code: PARTIAL_VAULT_ONLY` and the vault TX surfaced under
+
+        `error.details.vault_signature` / `error.details.vault_amount`. The
+
+        caller can retry with the same amount; the pre-flight will see the
+
+        ATA is now sufficient and skip the vault tap. 502 (rather than 200)
+
+        is deliberate: the idempotency middleware caches only 2xx, so
+
+        same-key retries against a 502 re-enter the handler instead of
+
+        replaying a cached partial response.
+
+
+        Idempotency-Key is honored: a duplicate request with the same key
+
+        replays the cached 2xx response without re-issuing on-chain TXs.
+
+        '
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - recipient
+              - amount_usdc
+              properties:
+                recipient:
+                  type: string
+                  description: 'Destination Solana wallet address (base58). Must be
+
+                    on-curve — PDAs, program IDs, and token-account
+
+                    addresses are rejected because funds sent to a
+
+                    derived ATA-of-an-ATA are unrecoverable.
+
+                    '
+                amount_usdc:
+                  type: number
+                  minimum: 1.0e-06
+                  description: 'USDC amount to send. Minimum is one USDC base unit
+
+                    (1e-6). Must be ≤ the caller''s total spendable pool
+
+                    (ATA + vault free_balance − in-flight RFQ holds);
+
+                    requests exceeding this are rejected with 400.
+
+                    '
+      responses:
+        '200':
+          description: 'Withdrawal submitted. `signature` is the external SPL transfer
+
+            signature. `vault_signature` and `vault_amount` are present
+
+            only when the request required a vault → ATA hop.
+
+            '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      signature:
+                        type: string
+                        description: External SPL transfer signature.
+                      explorer_url:
+                        type: string
+                        description: Solscan URL for the external SPL signature.
+                      vault_signature:
+                        type: string
+                        description: 'On-chain `withdraw_from_vault` signature.
+
+                          Present only when the request required a vault
+
+                          → ATA hop to cover a shortfall.
+
+                          '
+                      vault_amount:
+                        type: number
+                        description: 'USDC amount moved from vault to ATA before the
+
+                          external transfer. Present only when
+
+                          `vault_signature` is present.
+
+                          '
+                      recipient_ata_created:
+                        type: boolean
+                        description: 'Present (true) when the recipient had no USDC token
+
+                          account and this transaction created one (the
+
+                          create-and-chargeback path, gated by
+
+                          WITHDRAW_ATA_AUTOCREATE). The fee-payer fronts the
+
+                          ~0.002 SOL account rent and bills it back in USDC, so
+
+                          the recipient receives `delivered_usdc` and the treasury
+
+                          keeps `chargeback_usdc`. The create is non-idempotent, so
+
+                          a confirmed response means this tx created the account
+
+                          (a race where it already existed reverts and retries
+
+                          via the standard path, with no chargeback).
+
+                          '
+                      chargeback_usdc:
+                        type: number
+                        description: 'USDC withheld from the requested amount to reimburse
+
+                          the one-time recipient-ATA rent. Present only with
+
+                          `recipient_ata_created`.
+
+                          '
+                      delivered_usdc:
+                        type: number
+                        description: 'USDC actually delivered to the recipient
+
+                          (`amount_usdc − chargeback_usdc`). Present only with
+
+                          `recipient_ata_created`.
+
+                          '
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: 'The caller''s embedded wallet is no longer delegated for
+
+            server-side signing. Re-enabling trading from the app restores
+
+            the session signer.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '502':
+          description: 'Ambiguous partial state — returned as 5xx (not 200) so
+
+            Idempotency-Key callers retry against the handler instead of
+
+            replaying a cached partial response. Two codes:
+
+
+            `PARTIAL_VAULT_ONLY` — the vault tap succeeded but the external SPL
+
+            transfer failed to construct/broadcast. Funds moved from vault to
+
+            ATA; retry the same request to complete the external leg (the
+
+            pre-flight sees the updated ATA and skips the vault tap). Returned
+
+            only when the vault tap fired this request; a same-key retry against
+
+            an already-topped-up ATA skips the tap (`shortfall = 0`) and a
+
+            subsequent SPL failure surfaces as a normal 500.
+
+
+            `WITHDRAW_SUBMITTED_UNCONFIRMED` — only on the recipient-ATA
+
+            create-and-chargeback path (WITHDRAW_ATA_AUTOCREATE), where broadcast
+
+            and confirmation are separate steps: the transaction was broadcast
+
+            (`details.signature` present) but confirmation timed out, so it may
+
+            have landed. Do NOT blind-retry — verify the recipient balance first,
+
+            since a retry would re-send via the now-existing ATA and double-pay.
+
+            '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                        - PARTIAL_VAULT_ONLY
+                        - WITHDRAW_SUBMITTED_UNCONFIRMED
+                      message:
+                        type: string
+                      details:
+                        type: object
+                        properties:
+                          signature:
+                            type: string
+                            description: 'The broadcast transaction signature. Present on
+
+                              WITHDRAW_SUBMITTED_UNCONFIRMED — the tx may have
+
+                              landed; check it before retrying.
+
+                              '
+                          vault_signature:
+                            type: string
+                          vault_amount:
+                            type: number
+                          chargeback_usdc:
+                            type: number
+                            description: 'On WITHDRAW_SUBMITTED_UNCONFIRMED, the USDC that
+
+                              would have been withheld for the recipient-ATA rent.
+
+                              '
+                          delivered_usdc:
+                            type: number
+                            description: 'On WITHDRAW_SUBMITTED_UNCONFIRMED, the USDC that
+
+                              would have been delivered to the recipient.
+
+                              '
+                          partial:
+                            type: string
+                            enum:
+                            - vault_only
+                            - submitted_unconfirmed
+components:
+  schemas:
+    PortfolioSummary:
+      type: object
+      description: Derived portfolio-level aggregates from active positions.
+      properties:
+        active_count:
+          type: integer
+          description: Number of active (non-terminal) RFQs
+        active_bet_total:
+          type: number
+          description: Sum of bet_amount across active RFQs
+        portfolio_value:
+          type: number
+          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Privy DID — internal identifier, not exposed on public endpoints.
+        username:
+          type: string
+          description: Display name. Auto-set to the wallet address on first login; can be updated via `PUT /v1/username` to a 3-20 char alphanumeric.
+        email:
+          type: string
+          nullable: true
+        wallet_address:
+          type: string
+          nullable: true
+        approved:
+          type: boolean
+          description: True once the user has redeemed a valid invite code or has been admin-approved.
+        waitlisted:
+          type: boolean
+          description: True when `approved=false` and the user is on the waitlist; false otherwise. Always present.
+        auto_redeemed:
+          type: boolean
+          description: Only present when the `?ref` param successfully redeemed an invite code in this exact request.
+        airdrop:
+          nullable: true
+          description: 'Welcome-airdrop outcome from the auto-redeem path. Present alongside `auto_redeemed: true`. `null` when the invite has no airdrop configured or the user was already credited.'
+          allOf:
+          - $ref: '#/components/schemas/AirdropOutcome'
+        created_at:
+          type: string
+          format: date-time
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    UserStats:
+      type: object
+      properties:
+        total_parlays:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        total_wagered:
+          type: number
+        realized_pnl:
+          type: number
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Null when the user has never settled a trade (no rfq.user_stats row yet).
+    PortfolioBalance:
+      type: object
+      description: 'Caller''s vault balance (DB-cached, no RPC). Null only when the
+
+        caller has no vault row at all. For dual-role accounts the
+
+        bettor-side vault is preferred and the maker-side row is used
+
+        as a fallback (same rules as `GET /v1/vault`).
+
+        '
+      properties:
+        gross_balance:
+          type: number
+        locked_collateral:
+          type: number
+        free_balance:
+          type: number
+        vault_pda:
+          type: string
+        vault_token_account:
+          type: string
+    AirdropOutcome:
+      type: object
+      description: 'Welcome airdrop outcome. `success: true` with `pending: true` means the amount was staged and will mint on the user''s next `POST /v1/wallet/enable-trading` call. `success: false` means staging failed.'
+      required:
+      - success
+      - amount
+      - pending
+      properties:
+        success:
+          type: boolean
+        amount:
+          type: number
+          description: USDC (whole dollars).
+        pending:
+          type: boolean
+    RfqCounts:
+      type: object
+      properties:
+        open:
+          type: integer
+        quoted:
+          type: integer
+        accepted:
+          type: integer
+        confirmed:
+          type: integer
+        executed:
+          type: integer
+          description: Positions on-chain but not yet resolved. Distinct from total_settled — settled means market resolution + payout distributed.
+        total_settled:
+          type: integer
+        total_cancelled:
+          type: integer
+        total_expired:
+          type: integer
+        total_failed:
+          type: integer
+          description: Parlays where the vault position errored on-chain. Derived from vault_positions.status = 'error'.
+    AirdropDrainOutcome:
+      type: object
+      description: 'Outcome of the pending-airdrop drain performed by
+
+        `POST /v1/wallet/enable-trading`. Narrower than
+
+        `AirdropOutcome` — there is no `pending` field because the drain
+
+        is the terminal step (either the mint landed or it didn''t; the
+
+        amount is never left in a staged state by this endpoint).
+
+        `{ success: true, amount }` — the staged amount minted
+
+        successfully on-chain. `{ success: false, amount }` — the mint
+
+        attempt failed and the pending amount has been restored; the
+
+        user can retry on their next call.
+
+        '
+      required:
+      - success
+      - amount
+      properties:
+        success:
+          type: boolean
+        amount:
+          type: number
+          description: USDC amount (whole dollars)
+    DelegationStatus:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: True if a wallet is linked and delegation can proceed
+        delegated:
+          type: boolean
+          description: True if TEE wallet delegation is active (server can sign)
+        address:
+          type: string
+          description: Solana wallet address (base58). Empty string if no wallet linked.
+        wallet_id:
+          type: string
+          description: Privy embedded wallet ID (used for delegation API calls)
+    Wallet:
+      type: object
+      properties:
+        address:
+          type: string
+          nullable: true
+          description: Solana wallet address (base58). Null if no wallet is linked yet.
+        sol_balance:
+          type: number
+        usdc_balance:
+          type: number
+        vault_balance:
+          type: number
+          description: Gross USDC balance currently held in the caller's Totalis vault. Resolved by the returned `address`; returns 0 when no vault row exists for that wallet. Includes both free vault cash and locked collateral. Add to `usdc_balance` for total on-chain USDC across wallet and vault; subtract `locked_amount` from that total for an available-cash view.
+        locked_amount:
+          type: number
+          description: 'Every USDC the caller has committed across roles: in-flight RFQs, bettor-side vault position stakes, and maker-side `locked_collateral`. Because `vault_balance` is gross, vault locked collateral is intentionally represented in both `vault_balance` and `locked_amount`; compute available cash as `usdc_balance + vault_balance - locked_amount` and do not add `/v1/vault.locked_collateral` again.'
+        has_traded:
+          type: boolean
+          description: True once any of the caller's parlays has reached `executed` or `settled`. Informational account state; withdrawals are allowed regardless of this value.
+    PortfolioData:
+      type: object
+      description: Consolidated portfolio response from GET /v1/portfolio.
+      properties:
+        balance:
+          nullable: true
+          description: Null when user has no vault (never traded)
+          allOf:
+          - $ref: '#/components/schemas/PortfolioBalance'
+        stats:
+          $ref: '#/components/schemas/UserStats'
+        counts:
+          $ref: '#/components/schemas/RfqCounts'
+        summary:
+          $ref: '#/components/schemas/PortfolioSummary'
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type: integer
+          nullable: true
+          description: Seconds until retry; set on 429 responses.
+  responses:
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Missing or invalid authentication
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: Resource conflict (duplicate, already taken, invalid status transition, etc.)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      description: Client-generated UUID. Successful (2xx) responses are cached for 24h and replayed on retry with the same key. The request body is not part of the cache key — use a fresh UUID whenever the payload differs (e.g. updated odds), otherwise the original response is replayed. Non-2xx responses are not cached.
+      schema:
+        type: string
+        format: uuid
+  securitySchemes:
+    PrivyJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Privy JWT issued to the web dashboard. Sent as `Authorization: Bearer <jwt>`. The Privy session signer underpins all wallet-signed actions.'
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 'Programmatic API key. Sent as `X-API-Key: <key>`. Generate one from the Totalis dashboard. The same header is accepted on the WebSocket auth message.'

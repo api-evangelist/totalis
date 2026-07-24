@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Totalis RFQ API Keys Vault API
+  version: 2.1.0
+  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
+
+
+    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
+
+
+    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
+
+
+    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
+
+
+    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+servers:
+- url: https://api.totalis.trade
+  description: Production
+security:
+- ApiKey: []
+tags:
+- name: Vault
+paths:
+  /v1/vault:
+    get:
+      operationId: getUserVault
+      tags:
+      - Vault
+      summary: Get user vault state and active positions
+      description: 'Returns the user''s vault balance and active positions. Returns data: null
+
+        (200 OK) if the user has no vault yet (vault is created on first trade).
+
+        '
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      responses:
+        '200':
+          description: OK — vault state or null if no vault exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    nullable: true
+                    allOf:
+                    - $ref: '#/components/schemas/UserVaultResponse'
+components:
+  schemas:
+    PositionStatus:
+      type: string
+      description: Vault position lifecycle. `pending`/`processing` are intermediate states before on-chain creation; `settling`/`cancelling` are intermediate states for settlement/cancellation; `settled_win`/`settled_loss`/`cancelled` are terminal; the `*_mm_release` and `expired` states cover the permissionless-expiry path; the buyback path is `active → bought_back_pending_db → bought_back` (with `reconciling_bought_back_db` as the short-lived reconciler sentinel); `error` means retries are exhausted and manual intervention is required.
+      enum:
+      - pending
+      - processing
+      - active
+      - settling
+      - cancelling
+      - settled_win
+      - settled_loss
+      - cancelled
+      - reconciling_mm_release
+      - expired_pending_mm_release
+      - expired
+      - reconciling_bought_back_db
+      - bought_back_pending_db
+      - bought_back
+      - error
+    VaultPositionSummary:
+      type: object
+      description: 'Lightweight position summary for the vault response.
+
+
+        Caller-relative reading: `user_stake` and `mm_risk` are
+
+        side-of-trade labels, not caller-relative ones. When
+
+        `UserVaultResponse` returns the bettor-side vault, `user_stake`
+
+        is the caller''s own stake. When it returns the maker-side
+
+        vault (pure-MM accounts), `user_stake` is the counterparty
+
+        bettor''s stake and `mm_risk` is the caller''s own collateral.
+
+        Don''t display `user_stake` as "my stake" without branching on
+
+        which vault was returned — for aggregate "USDC committed",
+
+        prefer `wallet.locked_amount`, which is role-agnostic.
+
+        '
+      properties:
+        position_id:
+          type: string
+          description: 16-byte position ID (hex encoded)
+        rfq_id:
+          type: string
+          format: uuid
+        user_stake:
+          type: number
+          description: 'Bettor side of the trade. The caller''s stake on the
+
+            bettor-side vault response; the counterparty''s stake on
+
+            the maker-side vault response.
+
+            '
+        mm_risk:
+          type: number
+          description: 'Maker side of the trade. The counterparty''s collateral on
+
+            the bettor-side vault response; the caller''s own
+
+            collateral on the maker-side vault response.
+
+            '
+        total_payout:
+          type: number
+        status:
+          $ref: '#/components/schemas/PositionStatus'
+        created_at:
+          type: string
+          format: date-time
+    UserVaultResponse:
+      type: object
+      description: 'Vault state with active position summaries (GET /v1/vault response).
+
+        Returns the caller''s bettor-side vault (owner_type=''user'') when one
+
+        exists; falls back to their maker-side vault (owner_type=''mm'') for
+
+        pure-MM accounts so the portfolio surface reflects every USDC the
+
+        caller controls. `positions` is the bettor-side active list when
+
+        returning the user vault, or the maker-side active list (joined via
+
+        `q.market_maker_id`) when returning the MM vault.
+
+        '
+      properties:
+        vault_pda:
+          type: string
+        vault_token_account:
+          type: string
+        gross_balance:
+          type: number
+        locked_collateral:
+          type: number
+        free_balance:
+          type: number
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaultPositionSummary'
+  securitySchemes:
+    PrivyJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Privy JWT issued to the web dashboard. Sent as `Authorization: Bearer <jwt>`. The Privy session signer underpins all wallet-signed actions.'
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 'Programmatic API key. Sent as `X-API-Key: <key>`. Generate one from the Totalis dashboard. The same header is accepted on the WebSocket auth message.'

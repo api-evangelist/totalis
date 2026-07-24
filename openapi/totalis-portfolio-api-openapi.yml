@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Totalis RFQ API Keys Portfolio API
+  version: 2.1.0
+  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
+
+
+    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
+
+
+    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
+
+
+    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
+
+
+    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+servers:
+- url: https://api.totalis.trade
+  description: Production
+security:
+- ApiKey: []
+tags:
+- name: Portfolio
+paths:
+  /v1/pnl:
+    get:
+      operationId: getPnlV1
+      tags:
+      - Portfolio
+      summary: P&L timeseries
+      description: Realized P&L per day over the requested window (`1D` / `1W` / `1M` / `ALL`; default `1W`). Stats totals (wins / losses / realized P&L) are on `GET /v1/portfolio`.
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1D
+          - 1W
+          - 1M
+          - ALL
+          default: 1W
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      points:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PnlPoint'
+components:
+  schemas:
+    PnlPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        pnl:
+          type: number
+  securitySchemes:
+    PrivyJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Privy JWT issued to the web dashboard. Sent as `Authorization: Bearer <jwt>`. The Privy session signer underpins all wallet-signed actions.'
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 'Programmatic API key. Sent as `X-API-Key: <key>`. Generate one from the Totalis dashboard. The same header is accepted on the WebSocket auth message.'

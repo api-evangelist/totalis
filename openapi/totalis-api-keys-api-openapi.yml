@@ -1,0 +1,221 @@
+openapi: 3.0.3
+info:
+  title: Totalis RFQ API Keys API
+  version: 2.1.0
+  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
+
+
+    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
+
+
+    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
+
+
+    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
+
+
+    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+servers:
+- url: https://api.totalis.trade
+  description: Production
+security:
+- ApiKey: []
+tags:
+- name: API Keys
+  description: Manage programmatic access keys for the authenticated user.
+paths:
+  /v1/api-keys:
+    post:
+      operationId: createApiKey
+      summary: Create API Key
+      description: Create a new API key for the authenticated user. The full secret is returned **once** in `data.key` — save it immediately. Subsequent listings only show the prefix. Requires Privy JWT auth (web dashboard); cannot be called with an existing API key.
+      tags:
+      - API Keys
+      security:
+      - PrivyJWT: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Optional display name for the key.
+      responses:
+        '201':
+          description: API key created (full key visible once)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ApiKeyFull'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      operationId: listApiKeys
+      summary: List API Keys
+      description: List the authenticated user's API keys. Only metadata and prefixes are returned — the original secret is never re-exposed.
+      tags:
+      - API Keys
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      responses:
+        '200':
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      keys:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApiKeySummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/api-keys/{prefix}:
+    delete:
+      operationId: revokeApiKey
+      summary: Revoke API Key
+      description: Revoke one of the authenticated user's API keys by prefix. Takes effect immediately on all subsequent requests. Returns `204 No Content`.
+      tags:
+      - API Keys
+      security:
+      - PrivyJWT: []
+      - ApiKey: []
+      parameters:
+      - name: prefix
+        in: path
+        required: true
+        description: Key prefix returned by `listApiKeys` / `createApiKey` (`key_prefix`).
+        schema:
+          type: string
+      responses:
+        '204':
+          description: API key revoked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    ApiKeySummary:
+      type: object
+      properties:
+        key_prefix:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - revoked
+          - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        request_count:
+          type: integer
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    ApiKeyFull:
+      type: object
+      description: Returned only on creation; the full `key` is visible exactly once.
+      properties:
+        key:
+          type: string
+          description: Full API key (only shown once).
+        key_prefix:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type: integer
+          nullable: true
+          description: Seconds until retry; set on 429 responses.
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Missing or invalid authentication
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+  securitySchemes:
+    PrivyJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Privy JWT issued to the web dashboard. Sent as `Authorization: Bearer <jwt>`. The Privy session signer underpins all wallet-signed actions.'
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 'Programmatic API key. Sent as `X-API-Key: <key>`. Generate one from the Totalis dashboard. The same header is accepted on the WebSocket auth message.'
