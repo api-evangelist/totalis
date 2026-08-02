@@ -1,0 +1,72 @@
+# Totalis
+
+## Docs
+
+- [Wallet Delegation Status](https://docs.totalis.trade/api-reference/funds/delegation-status.md): Check whether the embedded (TEE) wallet has trading delegation enabled.
+- [Enable Trading](https://docs.totalis.trade/api-reference/funds/enable-trading.md): Confirm TEE wallet delegation and drain any pending welcome airdrop.
+- [Get Vault](https://docs.totalis.trade/api-reference/funds/get-vault.md): The caller's vault state and active position summaries.
+- [P&L Timeseries](https://docs.totalis.trade/api-reference/funds/pnl.md): Realized P&L per day over the requested window (1D / 1W / 1M / ALL).
+- [Portfolio](https://docs.totalis.trade/api-reference/funds/portfolio.md): Consolidated portfolio: balance, stats, status counts, and summary.
+- [Withdraw to External Address](https://docs.totalis.trade/api-reference/funds/wallet-withdraw.md): Withdraw USDC from the embedded wallet to an external Solana address.
+- [API overview](https://docs.totalis.trade/api-reference/introduction.md): The Totalis REST + SSE API — base URL, authentication, response envelope, pagination, and errors.
+- [Get Market](https://docs.totalis.trade/api-reference/markets/get.md): Fetch a single market by Kalshi ticker or Polymarket condition ID. Use the optional venue query parameter when you already know the source venue.
+- [List Markets](https://docs.totalis.trade/api-reference/markets/list.md): List active prediction markets on Totalis, grouped by event. Supports both Kalshi and Polymarket venues, with filters for category, subcategory, frequency, date window, and full-text search.
+- [List Markets (Flat)](https://docs.totalis.trade/api-reference/markets/list-flat.md): A flat, paginated feed of every individual market — ungrouped and never truncated. Built for market makers and partners syncing the full tradeable universe.
+- [Confirm Quote](https://docs.totalis.trade/api-reference/mm/confirm-quote.md): Confirm an accepted quote to lock in the trade and begin vault settlement.
+- [Get Position](https://docs.totalis.trade/api-reference/mm/get-position.md): Fetch one of your active market-maker positions by its RFQ id, with full parlay legs.
+- [List Positions](https://docs.totalis.trade/api-reference/mm/list-positions.md): List your active market-maker positions, each with its full parlay legs. Offset paginated, with an optional exposure filter.
+- [List Quotes](https://docs.totalis.trade/api-reference/mm/list-quotes.md): List your quotes and their lifecycle status. Filter by status or RFQ, with cursor pagination.
+- [Get Parlay](https://docs.totalis.trade/api-reference/parlays/get.md): Fetch one parlay (RFQ) by id, with quotes and — once terminal — its settlement detail (per-leg outcomes, payout, and settle/buyback transaction).
+- [List Parlays](https://docs.totalis.trade/api-reference/parlays/list.md): List your parlays (RFQs) with cursor pagination and optional status filter.
+- [Decline Cashout](https://docs.totalis.trade/api-reference/quote-service-mm/cashout-decline.md): Permanently refuse to quote an early-cashout (buyback) request.
+- [Submit Buyback Quote](https://docs.totalis.trade/api-reference/quote-service-mm/cashout-quote.md): Price an early-cashout (buyback) request as the position's counterparty market maker.
+- [Heartbeat](https://docs.totalis.trade/api-reference/quote-service-mm/heartbeat.md): Send a liveness heartbeat to maintain your market maker connection.
+- [Stream Quote Requests](https://docs.totalis.trade/api-reference/quote-service-mm/stream.md): Subscribe to all active quote requests in real time via Server-Sent Events.
+- [Submit or Replace Quote](https://docs.totalis.trade/api-reference/quote-service-mm/submit-quote.md): Submit a price quote for an active quote request, or replace your existing quote.
+- [Withdraw Quote](https://docs.totalis.trade/api-reference/quote-service-mm/withdraw-quote.md): Withdraw your active quote from a quote request before the user commits it.
+- [Cancel Quote Request](https://docs.totalis.trade/api-reference/quote-service/cancel.md): Cancel an active quote request.
+- [Cancel Cashout Request](https://docs.totalis.trade/api-reference/quote-service/cashout-cancel.md): Cancel an active cashout (buyback) request.
+- [Commit Cashout](https://docs.totalis.trade/api-reference/quote-service/cashout-commit.md): Accept the live buyback quote and drive the early cashout on-chain.
+- [Create Cashout Request](https://docs.totalis.trade/api-reference/quote-service/cashout-create.md): Open an early-cashout (buyback) request for an on-chain position.
+- [Get Cashout Request](https://docs.totalis.trade/api-reference/quote-service/cashout-get.md): Retrieve a cashout request with its live buyback quote.
+- [Stream Cashout Quote](https://docs.totalis.trade/api-reference/quote-service/cashout-stream.md): Subscribe to the live buyback quote and terminal status for a cashout request via Server-Sent Events.
+- [Commit Quote Request](https://docs.totalis.trade/api-reference/quote-service/commit.md): Lock in the best available quote and create a trade.
+- [Create Quote Request](https://docs.totalis.trade/api-reference/quote-service/create.md): Create a new quote request for a multi-leg parlay.
+- [Get Quote Request](https://docs.totalis.trade/api-reference/quote-service/get.md): Retrieve a quote request with all active quotes and the current best quote.
+- [Stream Quote Updates](https://docs.totalis.trade/api-reference/quote-service/stream.md): Subscribe to real-time best-quote updates for a quote request via Server-Sent Events.
+- [Update Quote Request](https://docs.totalis.trade/api-reference/quote-service/update.md): Update the legs or bet amount on an active quote request.
+- [Check Username](https://docs.totalis.trade/api-reference/user/check-username.md): Check if a username is available on Totalis before updating your profile
+- [Create API Key](https://docs.totalis.trade/api-reference/user/create-api-key.md): Create a new API key for your Totalis account. The full secret is returned only on this response — save it immediately. Requires a Privy JWT (web dashboard); cannot be called with an existing API key.
+- [Get Blockhash](https://docs.totalis.trade/api-reference/user/get-blockhash.md): Get the latest Solana blockhash via Totalis. Proxy for browser clients without direct RPC access
+- [Get Profile](https://docs.totalis.trade/api-reference/user/get-profile.md): Get the authenticated Totalis user profile. Auto-creates a record on first call. Pass ?ref=<invite-code> on first login to auto-redeem an invite code (auto_redeemed and airdrop fields surface on success).
+- [Get Wallet](https://docs.totalis.trade/api-reference/user/get-wallet.md): Get the authenticated user wallet snapshot — address, SOL/USDC wallet balance, vault balance, and aggregated locked_amount across active RFQs and vault positions.
+- [List API Keys](https://docs.totalis.trade/api-reference/user/list-api-keys.md): List all API keys for your Totalis account. Returns metadata and prefixes, never full secrets
+- [Revoke API Key](https://docs.totalis.trade/api-reference/user/revoke-api-key.md): Revoke one of your Totalis API keys by prefix. Takes effect immediately on all requests
+- [Submit Transaction](https://docs.totalis.trade/api-reference/user/submit-tx.md): Submit a client-signed serialized Solana transaction (base64). Used by browser flows that do not have direct RPC access. Rate-limited to 10 requests/minute.
+- [Update Username](https://docs.totalis.trade/api-reference/user/update-username.md): Update your Totalis username. Must be 3-20 alphanumeric characters or underscores
+- [Get Webhook Config](https://docs.totalis.trade/api-reference/webhooks/get-config.md): Current webhook endpoint config + the subscribable event catalog.
+- [List Deliveries](https://docs.totalis.trade/api-reference/webhooks/list-deliveries.md): Recent webhook delivery attempts, newest first.
+- [Replay Delivery](https://docs.totalis.trade/api-reference/webhooks/redeliver.md): Re-queue a delivered or dead-lettered delivery.
+- [Rotate Signing Secret](https://docs.totalis.trade/api-reference/webhooks/rotate-secret.md): Mint a fresh HMAC signing secret (returned once).
+- [Set Webhook Config](https://docs.totalis.trade/api-reference/webhooks/set-config.md): Set the endpoint URL and subscribed events.
+- [Authentication](https://docs.totalis.trade/guides/authentication.md): How to authenticate against the Totalis REST API and WebSocket — scoped API keys for programmatic clients and Privy JWTs for the web dashboard.
+- [Event catalog](https://docs.totalis.trade/guides/event-catalog.md): Every lifecycle moment mapped across SSE, WebSocket, webhooks, and REST — plus the field and identity names that mean the same thing on different channels.
+- [FAQ](https://docs.totalis.trade/guides/faq.md): Frequently asked questions about Totalis — the derivatives layer for prediction markets, custom parlays, Solana vaults, fees, limits, and security
+- [Funding your wallet](https://docs.totalis.trade/guides/funding.md): Fund your Totalis account by sending USDC to your Solana wallet, enable trading, and withdraw.
+- [How parlays work](https://docs.totalis.trade/guides/lifecycle.md): The path a parlay takes from a quote request, through market-maker pricing and acceptance, to on-chain settlement — and how to close one early.
+- [Live quote requests](https://docs.totalis.trade/guides/live-quote-requests.md): How Totalis parlay trading works: create quote requests, receive real-time pricing from market makers, and commit with stale-price protection.
+- [Market making](https://docs.totalis.trade/guides/market-maker.md): Get started as a market maker on Totalis — stream live parlay quote requests, submit competitive quotes via the Quote Service, and earn the spread.
+- [Quickstart](https://docs.totalis.trade/guides/quickstart.md): Authenticate, make your first call, and find your way to placing a parlay.
+- [Reading your data](https://docs.totalis.trade/guides/reading-data.md): Pull your account state on demand — portfolio, parlay history, settlement outcomes, P&L, and balances — to complement the webhook push channel.
+- [Real time & data channels](https://docs.totalis.trade/guides/realtime-and-data.md): Which channel to use when: SSE for live quote pricing, WebSocket for live trade events, webhooks for durable delivery, and REST reads for state on demand.
+- [Vaults & custody](https://docs.totalis.trade/guides/vault-architecture.md): How Totalis holds collateral: non-custodial on-chain Solana vaults, delegated signing, gas sponsorship, and automatic settlement.
+- [Webhooks](https://docs.totalis.trade/guides/webhooks.md): Receive HMAC-signed events when your positions settle, get bought back, or your funds move. Configure an endpoint, verify signatures, handle retries, and replay deliveries.
+- [WebSocket](https://docs.totalis.trade/guides/websocket.md): Real-time trade confirmations and position updates via WebSocket.
+- [Totalis World Cup 10k Reward Pool](https://docs.totalis.trade/guides/world-cup-reward-pool.md): Trade the FIFA World Cup season for a share of the $10,000 Totalis reward pool
+- [Totalis](https://docs.totalis.trade/index.md): APIs for building and settling custom parlays across prediction markets — Kalshi, Polymarket, and more — on Solana.
+- [Privacy Policy](https://docs.totalis.trade/privacy-policy.md): Totalis Privacy Policy describing how UCALLEDIT, Inc. collects, uses, and shares personal information through the Totalis trading platform and related Service.
+- [Terms of Service](https://docs.totalis.trade/terms-of-service.md): Totalis Terms of Service governing access to and use of the Totalis trading platform, RFQ system, vaults, and related technologies.
+
+## OpenAPI Specs
+
+- [openapi](https://docs.totalis.trade/api-reference/openapi.json)

@@ -1,0 +1,32 @@
+generated: '2026-07-21'
+method: searched
+source: https://docs.totalis.trade/api-reference/introduction
+versioning:
+  scheme: uri-path
+  current: v1
+  spec_version: 2.1.0
+  notes: >-
+    Authenticated endpoints live under /v1/; public market-data endpoints
+    (/markets, /markets/{ticker}) are unversioned. The OpenAPI document carries
+    its own version (2.1.0). No dated changelog or release-notes page is
+    published yet.
+deprecation:
+  policy_url: null
+  sunset_header: false
+  notes: No deprecation policy or RFC 8594 Sunset-header support is documented.
+sla:
+  url: null
+status_page: null
+credential_lifecycle:
+  api_keys:
+    states: [active, revoked, expired]
+    docs: https://docs.totalis.trade/guides/authentication#key-lifecycle
+object_lifecycle:
+  quote_request:
+    states: [active, committed, cancelled, expired]
+    notes: Pre-commit, ephemeral — ceases to exist once it commits or dies.
+  rfq:
+    states: [open, quoted, accepted, confirmed, executed, settled, bought_back, cancelled, expired]
+    notes: The post-commit API object ("parlay"); becomes an on-chain position once confirmed.
+  docs: https://docs.totalis.trade/guides/event-catalog#the-noun-stack
+deprecated_operations: []

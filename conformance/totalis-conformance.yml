@@ -1,0 +1,48 @@
+generated: '2026-07-21'
+method: derived
+source: openapi/totalis-openapi-original.json + https://docs.totalis.trade
+standards:
+- id: oauth2
+  conforms: false
+  evidence: >-
+    No oauth2 securityScheme — authentication is scoped API keys (X-API-Key)
+    plus Privy-issued JWT bearer tokens for the dashboard.
+- id: oidc
+  conforms: false
+  evidence: No openIdConnect scheme and no /.well-known/openid-configuration on the API host (404).
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: >-
+    Errors use a custom { error: { code, message, details } } envelope in
+    application/json, not application/problem+json.
+- id: pagination
+  conforms: true
+  evidence: >-
+    Opaque cursor pagination documented API-wide (meta.cursor / meta.has_more);
+    MM positions list is offset paginated.
+- id: idempotency
+  conforms: false
+  evidence: >-
+    No Idempotency-Key header or request-idempotency contract documented;
+    webhook consumers dedupe on X-Totalis-Event-Id (at-least-once delivery).
+- id: rfc9116-security-txt
+  conforms: false
+  evidence: /.well-known/security.txt returns 404 on the API host; www serves an SPA catch-all.
+- id: rfc8594-sunset
+  conforms: false
+  evidence: No Sunset/Deprecation header support or deprecation policy documented.
+- id: json-api
+  conforms: false
+  evidence: Custom { data } envelope with snake_case fields, not JSON:API media type.
+- id: sse
+  conforms: true
+  evidence: >-
+    Server-Sent Events streams documented for live quote pricing
+    (/v1/quote-requests/{id}/stream, /v1/mm/quote-requests/stream, cashout
+    streams).
+- id: webhook-hmac-signing
+  conforms: true
+  evidence: >-
+    HMAC-SHA256 signatures (X-Totalis-Signature: t=...,v1=...) over
+    "<timestamp>.<raw-body>" with replay-window guidance and constant-time
+    comparison, per the webhooks guide.

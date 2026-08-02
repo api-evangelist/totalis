@@ -1,0 +1,66 @@
+generated: '2026-07-21'
+method: searched
+source: https://docs.totalis.trade/api-reference/introduction#errors
+format: custom-envelope
+envelope: '{ "error": { "code": "...", "message": "...", "details": {} } } — not RFC 9457;
+  application/json with a stable error object. On 429, error.retry_after gives seconds to wait.'
+codes:
+- code: VALIDATION_ERROR
+  status: 400
+  title: Request validation failed
+  remediation: >-
+    Check error.details — details.issues for parameter/body problems,
+    details.leg_errors for market validation failures (market not found,
+    expired, or exclusion conflict).
+- code: UNAUTHORIZED
+  status: 401
+  title: Missing or invalid credentials
+  remediation: Send a valid X-API-Key header (or Privy JWT bearer token).
+- code: FORBIDDEN
+  status: 403
+  title: Key lacks the required scope
+  remediation: >-
+    The API key does not hold the scope the endpoint requires
+    (insufficient_scope). Mint a key with the needed scope.
+- code: NOT_FOUND
+  status: 404
+  title: Resource not found
+- code: CONFLICT
+  status: 409
+  title: Request conflicts with current state
+  remediation: e.g. username already taken, or a withdrawal conflicting with locked collateral.
+- code: RATE_LIMITED
+  status: 429
+  title: Rate limit exceeded
+  remediation: Wait error.retry_after seconds; observe the X-RateLimit-* response headers.
+- code: PAYLOAD_TOO_LARGE
+  status: 413
+  title: Request body exceeds the 256KB limit
+- code: INTERNAL_ERROR
+  status: 500
+  title: Internal server error
+- code: SERVICE_UNAVAILABLE
+  status: 503
+  title: Service temporarily unavailable
+observed_responses:
+  note: 4xx/5xx responses declared per operation in the OpenAPI document.
+  derived_from: openapi/totalis-openapi-original.json
+  by_status:
+  - status: 400
+    operations: [getMarket, listMarkets, listMarketsFlat, setWebhookConfig, submitTransaction,
+      updateUsername, withdrawFromWallet]
+  - status: 401
+    operations: [checkUsername, createApiKey, enableTrading, getBlockhash, getOrCreateUser,
+      getWallet, listApiKeys, revokeApiKey, submitTransaction, updateUsername, withdrawFromWallet]
+  - status: 404
+    operations: [getMarket, getRfqV1, redeliverWebhookDelivery, revokeApiKey, rotateWebhookSecret]
+  - status: 409
+    operations: [updateUsername, withdrawFromWallet]
+  - status: 429
+    operations: [submitTransaction, withdrawFromWallet]
+  - status: 500
+    operations: [listMarkets, listMarketsFlat, withdrawFromWallet]
+  - status: 502
+    operations: [withdrawFromWallet]
+  - status: 503
+    operations: [listMarketsFlat]

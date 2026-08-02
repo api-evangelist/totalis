@@ -1,0 +1,45 @@
+specification: API Commons Rate Limits
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/RateLimits
+provider: Totalis
+providerId: totalis
+generated: '2026-07-21'
+method: searched
+created: '2026-07-21'
+modified: '2026-07-21'
+tags:
+- Rate Limiting
+- Prediction Markets
+description: >-
+  Totalis RFQ API rate limits — 100 requests/minute unauthenticated and 300
+  requests/minute authenticated, with a tighter per-endpoint limit on Solana
+  transaction submission. Every response carries X-RateLimit-Limit,
+  X-RateLimit-Remaining, and X-RateLimit-Reset; a 429 error envelope includes
+  error.retry_after with the seconds to wait. Request body limit is 256KB
+  (PAYLOAD_TOO_LARGE above it).
+sources:
+- https://docs.totalis.trade/api-reference/introduction
+headers:
+  limit: X-RateLimit-Limit
+  remaining: X-RateLimit-Remaining
+  reset: X-RateLimit-Reset
+responseCodes:
+  throttled: 429
+  throttledCode: RATE_LIMITED
+  retryAfterField: error.retry_after
+limits:
+- name: Unauthenticated requests
+  scope: ip
+  metric: requests_per_minute
+  limit: 100
+  timeFrame: minute
+- name: Authenticated requests
+  scope: account
+  metric: requests_per_minute
+  limit: 300
+  timeFrame: minute
+- name: Submit Solana transaction (POST /v1/wallet/submit-tx)
+  scope: account
+  metric: requests_per_minute
+  limit: 10
+  timeFrame: minute

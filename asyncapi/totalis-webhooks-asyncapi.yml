@@ -1,0 +1,147 @@
+# generated: '2026-07-21'
+# method: generated
+# source: https://docs.totalis.trade/guides/webhooks + https://docs.totalis.trade/guides/event-catalog
+# Faithful AsyncAPI rendering of the webhook surface Totalis documents. Totalis
+# publishes no AsyncAPI of its own; every channel, event, scope, and payload
+# field below comes from the published docs.
+asyncapi: 2.6.0
+info:
+  title: Totalis Webhooks
+  version: '1.0.0'
+  description: >-
+    Totalis pushes HMAC-signed webhook events when positions settle, get bought
+    back, or funds move. Deliveries are at-least-once with exponential-backoff
+    retries and dead-lettering, replayable via the API, and gated on the API
+    key's scopes (re-checked at delivery time). Each delivery carries
+    X-Totalis-Signature (t=<unix-seconds>,v1=<hmac-sha256-hex> over
+    "<timestamp>.<raw-body>"), X-Totalis-Event-Id (dedupe key), and
+    X-Totalis-Event-Type. Deliveries only start once a signing secret exists
+    (whsec_..., shown exactly once). Market makers manage a separate endpoint
+    with ?owner_kind=mm. Note position.bought_back is webhook-only — it has no
+    WebSocket equivalent.
+externalDocs:
+  description: Totalis Webhooks guide
+  url: https://docs.totalis.trade/guides/webhooks
+servers:
+  production:
+    url: https://api.totalis.trade
+    protocol: https
+    description: >-
+      Events are POSTed to your configured HTTPS endpoint (PUT /v1/webhooks).
+      The endpoint URL must not resolve to private/internal infrastructure.
+defaultContentType: application/json
+channels:
+  position.settled:
+    description: Position settled with its terminal outcome. Requires scope positions:read.
+    subscribe:
+      operationId: onPositionSettled
+      message:
+        name: position.settled
+        payload:
+          type: object
+          properties:
+            id: {type: string, description: Event id (evt_...)}
+            type: {type: string, const: position.settled}
+            data:
+              type: object
+              properties:
+                rfq_id: {type: string}
+                outcome: {type: string}
+                tx_signature: {type: string}
+                occurred_at: {type: string, format: date-time}
+  position.cancelled:
+    description: Position cancelled, collateral unlocked. Requires scope positions:read.
+    subscribe:
+      operationId: onPositionCancelled
+      message:
+        name: position.cancelled
+        payload:
+          type: object
+          properties:
+            id: {type: string}
+            type: {type: string, const: position.cancelled}
+            data:
+              type: object
+              properties:
+                rfq_id: {type: string}
+                reason: {type: string}
+                occurred_at: {type: string, format: date-time}
+  position.bought_back:
+    description: >-
+      Position bought out early (cashout). Webhook-only — no WebSocket
+      equivalent exists. amount is the directional buyback amount net of the
+      refunded stake; mm_pays_user gives the direction. Requires scope
+      positions:read.
+    subscribe:
+      operationId: onPositionBoughtBack
+      message:
+        name: position.bought_back
+        payload:
+          type: object
+          properties:
+            id: {type: string}
+            type: {type: string, const: position.bought_back}
+            data:
+              type: object
+              properties:
+                rfq_id: {type: string}
+                amount: {type: number}
+                mm_pays_user: {type: boolean}
+                tx_signature: {type: string}
+                occurred_at: {type: string, format: date-time}
+  parlay.status_changed:
+    description: >-
+      Tracks an RFQ's live progression — status is one of accepted, confirmed,
+      executed, or cancelled (never settled; use position.* for terminal
+      outcomes). A cancellation fires both this and position.cancelled — dedupe
+      on X-Totalis-Event-Id. Requires scope positions:read.
+    subscribe:
+      operationId: onParlayStatusChanged
+      message:
+        name: parlay.status_changed
+        payload:
+          type: object
+          properties:
+            id: {type: string}
+            type: {type: string, const: parlay.status_changed}
+            data:
+              type: object
+              properties:
+                rfq_id: {type: string}
+                status: {type: string, enum: [accepted, confirmed, executed, cancelled]}
+                accepted_quote_id: {type: [string, 'null']}
+                occurred_at: {type: string, format: date-time}
+  funds.deposited:
+    description: USDC deposited into the vault. Requires scope balances:read.
+    subscribe:
+      operationId: onFundsDeposited
+      message:
+        name: funds.deposited
+        payload:
+          type: object
+          properties:
+            id: {type: string}
+            type: {type: string, const: funds.deposited}
+            data:
+              type: object
+              properties:
+                amount_usdc: {type: number}
+                vault_balance: {type: number}
+                occurred_at: {type: string, format: date-time}
+  funds.withdrawn:
+    description: USDC withdrawn from the vault. Requires scope balances:read.
+    subscribe:
+      operationId: onFundsWithdrawn
+      message:
+        name: funds.withdrawn
+        payload:
+          type: object
+          properties:
+            id: {type: string}
+            type: {type: string, const: funds.withdrawn}
+            data:
+              type: object
+              properties:
+                amount_usdc: {type: number}
+                vault_balance: {type: number}
+                occurred_at: {type: string, format: date-time}

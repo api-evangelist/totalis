@@ -1,8 +1,29 @@
 aid: totalis
 name: Totalis
-description: Totalis is a company surfaced as a portfolio company of y-combinator and added to the API
-  Evangelist network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
+description: >-
+  Totalis (totalis.trade), operated by UCALLEDIT, Inc., is a Y Combinator-backed
+  (Spring 2026) derivatives layer for prediction markets. Users pick two to five
+  outcomes across underlying venues like Kalshi and Polymarket and combine them
+  into a single parlay; market makers compete to price the trade through a
+  request-for-quote (RFQ) system, and positions settle in non-custodial Solana
+  vaults with USDC collateral. The Totalis RFQ API is a documented REST + SSE
+  surface with scoped API keys, a WebSocket for post-trade events, and
+  HMAC-signed webhooks — covering markets, quote requests, parlays, portfolio,
+  funds, and market-maker flows.
 url: https://raw.githubusercontent.com/api-evangelist/totalis/refs/heads/main/apis.yml
+accessModel:
+  pricing: unknown
+  onboarding: self-serve
+  trial: false
+  try_now: false
+  public: false
+  label: Self-serve signup
+  confidence: medium
+  source:
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://www.totalis.trade/favicon.png
 x-type: company
 x-source: vc-portfolio
 x-backed-by:
@@ -11,12 +32,159 @@ x-tier: stub
 x-tier-reason: portfolio-lead
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-17'
+modified: '2026-07-21'
 tags:
 - Company
-apis: []
+- Prediction Markets
+- Derivatives
+- Parlays
+- Trading
+- RFQ
+- Solana
+- Crypto Web3
+- Market Data
+- Webhooks
+apis:
+- aid: totalis:totalis-api-keys-api
+  name: Totalis API Keys API
+  description: Manage programmatic access keys for the authenticated user.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - API Keys
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-api-keys-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
+- aid: totalis:totalis-markets-api
+  name: Totalis Markets API
+  description: Cached Kalshi and Polymarket market data.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - Markets
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-markets-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
+- aid: totalis:totalis-portfolio-api
+  name: Totalis Portfolio API
+  description: The Portfolio API from Totalis — 1 operation(s) for portfolio.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - Portfolio
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-portfolio-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
+- aid: totalis:totalis-rfqs-api
+  name: Totalis RFQs API
+  description: The RFQs API from Totalis — 2 operation(s) for rfqs.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - RFQs
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-rfqs-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
+- aid: totalis:totalis-user-api
+  name: Totalis User API
+  description: User profile, wallet, and devnet helpers.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - User
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-user-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
+- aid: totalis:totalis-vault-api
+  name: Totalis Vault API
+  description: The Vault API from Totalis — 1 operation(s) for vault.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - Vault
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-vault-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
+- aid: totalis:totalis-webhooks-api
+  name: Totalis Webhooks API
+  description: The Webhooks API from Totalis — 4 operation(s) for webhooks.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - Webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+common:
+- type: Website
+  url: https://www.totalis.trade
+- type: DeveloperPortal
+  url: https://docs.totalis.trade
+- type: Documentation
+  url: https://docs.totalis.trade
+- type: APIReference
+  url: https://docs.totalis.trade/api-reference/introduction
+- type: GettingStarted
+  url: https://docs.totalis.trade/guides/quickstart
+- type: SignUp
+  url: https://app.totalis.trade
+- type: Pricing
+  url: https://docs.totalis.trade/guides/faq
+- type: FAQ
+  url: https://docs.totalis.trade/guides/faq
+- type: TermsOfService
+  url: https://docs.totalis.trade/terms-of-service
+- type: PrivacyPolicy
+  url: https://docs.totalis.trade/privacy-policy
+- type: Twitter
+  url: https://x.com/totalistrading
+- type: LLMsTxt
+  url: llms/totalis-llms.txt
+- type: Authentication
+  url: authentication/totalis-authentication.yml
+- type: MCPServer
+  url: mcp/totalis-mcp.yml
+- type: AsyncAPI
+  url: asyncapi/totalis-webhooks-asyncapi.yml
+- type: Webhooks
+  url: asyncapi/totalis-webhooks-asyncapi.yml
+- type: ErrorCatalog
+  url: errors/totalis-problem-types.yml
+- type: Conventions
+  url: conventions/totalis-conventions.yml
+- type: RateLimits
+  url: rate-limits/totalis-rate-limits.yml
+- type: Lifecycle
+  url: lifecycle/totalis-lifecycle.yml
+- type: Conformance
+  url: conformance/totalis-conformance.yml
+- type: DataModel
+  url: data-model/totalis-data-model.yml
+- type: DomainSecurity
+  url: security/totalis-domain-security.yml
+- type: AgentSkill
+  url: skills/_index.yml
+x-enrichment:
+  date: '2026-07-21'
+  status: enriched
+  artifacts_added: 19
+  pass: local-v1

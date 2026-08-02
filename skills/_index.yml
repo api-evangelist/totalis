@@ -1,0 +1,16 @@
+generated: '2026-07-21'
+method: generated
+source: openapi/totalis-openapi-original.json + https://docs.totalis.trade/guides
+skills:
+- file: totalis-read-portfolio-and-pnl.md
+  name: Read a Totalis portfolio, parlays, and P&L
+  api: openapi/totalis-openapi-original.json
+  operations: [getOrCreateUser, getWallet, getUserPortfolio, getUserVault, listRfqsV1, getRfqV1, getPnlV1]
+- file: totalis-browse-markets.md
+  name: Browse Totalis prediction markets
+  api: openapi/totalis-openapi-original.json
+  operations: [listMarkets, listMarketsFlat, getMarket]
+- file: totalis-configure-webhooks.md
+  name: Configure and operate Totalis webhooks
+  api: openapi/totalis-openapi-original.json
+  operations: [getWebhookConfig, setWebhookConfig, rotateWebhookSecret, listWebhookDeliveries, redeliverWebhookDelivery]

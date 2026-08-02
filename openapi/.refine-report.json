@@ -1,0 +1,26 @@
+{
+  "provider": "totalis",
+  "sources": [
+    "totalis-api-keys-api-openapi.yml",
+    "totalis-markets-api-openapi.yml",
+    "totalis-portfolio-api-openapi.yml",
+    "totalis-rfqs-api-openapi.yml",
+    "totalis-user-api-openapi.yml",
+    "totalis-vault-api-openapi.yml",
+    "totalis-webhooks-api-openapi.yml"
+  ],
+  "outputs": [
+    "totalis-api-keys-api-openapi.yml",
+    "totalis-markets-api-openapi.yml",
+    "totalis-portfolio-api-openapi.yml",
+    "totalis-rfqs-api-openapi.yml",
+    "totalis-user-api-openapi.yml",
+    "totalis-vault-api-openapi.yml",
+    "totalis-webhooks-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}

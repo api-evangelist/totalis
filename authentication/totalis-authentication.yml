@@ -1,0 +1,83 @@
+generated: '2026-07-21'
+method: searched
+source: https://docs.totalis.trade/guides/authentication
+docs: https://docs.totalis.trade/guides/authentication
+summary:
+  types:
+  - apiKey
+  - http
+  api_key_in:
+  - header
+  notes: >-
+    Two schemes, accepted interchangeably on every authenticated endpoint: a
+    scoped programmatic API key (X-API-Key header, also accepted on the
+    WebSocket auth message) and a Privy JWT bearer token used by the web
+    dashboard. The one exception is POST /v1/api-keys (create key), which
+    requires a Privy JWT or a key holding the keys:manage scope. A new key can
+    never grant a scope the creating credential does not already hold.
+schemes:
+- name: PrivyJWT
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: 'Privy JWT issued to the web dashboard. Sent as `Authorization: Bearer <jwt>`.
+    The Privy session signer underpins all wallet-signed actions.'
+  sources:
+  - openapi/totalis-openapi-original.json
+- name: ApiKey
+  type: apiKey
+  in: header
+  parameter: X-API-Key
+  description: 'Programmatic API key. Sent as `X-API-Key: <key>`. Generate one from the Totalis
+    dashboard (app.totalis.trade, account settings). The full key is shown only at creation.
+    The same header is accepted on the WebSocket auth message
+    ({"type": "auth", "api_key": "<key>"}).'
+  sources:
+  - openapi/totalis-openapi-original.json
+key_scopes:
+  description: >-
+    Every API key carries a set of scopes chosen at creation. A request to an
+    endpoint whose scope the key lacks is rejected with 403 (insufficient_scope).
+    Webhook deliveries are also gated on the key's scopes, re-checked at delivery
+    time.
+  docs: https://docs.totalis.trade/guides/authentication#scopes
+  scopes:
+  - scope: account:read
+    grants: View account profile and username.
+    risk: low
+  - scope: markets:read
+    grants: Browse markets and exclusion groups.
+    risk: low
+  - scope: positions:read
+    grants: View quote requests, portfolio, stats, and P&L.
+    risk: low
+  - scope: balances:read
+    grants: View wallet and vault balances and delegation status.
+    risk: low
+  - scope: trading:write
+    grants: Create, modify, commit, and cancel quote requests (place parlays).
+    risk: medium
+  - scope: funds:deposit
+    grants: Move USDC into the vault.
+    risk: low
+  - scope: funds:withdraw
+    grants: Move USDC out of the vault/wallet to any address. Can drain the account.
+    risk: high
+  - scope: account:write
+    grants: Change username and profile settings.
+    risk: medium
+  - scope: tx:sign
+    grants: Submit arbitrary signed Solana transactions.
+    risk: high
+  - scope: keys:manage
+    grants: Create, list, and revoke API keys. Lets a key mint more keys.
+    risk: high
+  - scope: mm:quote
+    grants: Read RFQs and submit/confirm quotes as a market maker.
+    risk: medium
+key_lifecycle:
+  states: [active, revoked, expired]
+  management:
+    list: GET /v1/api-keys
+    create: POST /v1/api-keys (Privy JWT or keys:manage scope required)
+    revoke: DELETE /v1/api-keys/{prefix}

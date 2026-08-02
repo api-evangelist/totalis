@@ -1,0 +1,38 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the Totalis RFQ API
+  version: 1.0.0
+extends: openapi/totalis-openapi-original.json
+actions:
+- target: $.info
+  update:
+    x-apievangelist:
+      provider: totalis
+      profiled: '2026-07-21'
+      artifacts:
+        authentication: authentication/totalis-authentication.yml
+        conventions: conventions/totalis-conventions.yml
+        errors: errors/totalis-problem-types.yml
+        rate-limits: rate-limits/totalis-rate-limits.yml
+        webhooks: asyncapi/totalis-webhooks-asyncapi.yml
+        websocket: asyncapi/totalis-websocket-asyncapi.yml
+        data-model: data-model/totalis-data-model.yml
+- target: $.info
+  update:
+    x-notes: >-
+      The published OpenAPI covers the REST surface (markets, user, API keys,
+      wallet/vault, RFQ reads, P&L, webhook config). The Quote Service (user +
+      market-maker RFQ pricing, SSE streams, cashout flows) is documented as
+      hand-written reference pages at
+      https://docs.totalis.trade/api-reference/quote-service/create and
+      siblings, but is not included in the machine-readable spec — the biggest
+      contract-coverage gap to raise with the provider.
+- target: $.info
+  update:
+    x-event-surface:
+      websocket: wss://api.totalis.trade/ws
+      sse:
+      - /v1/quote-requests/{id}/stream
+      - /v1/cashout-requests/{id}/stream
+      - /v1/mm/quote-requests/stream
+      webhooks: https://docs.totalis.trade/guides/webhooks

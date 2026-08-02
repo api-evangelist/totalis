@@ -1,0 +1,59 @@
+generated: '2026-07-21'
+method: derived
+source: openapi/totalis-openapi-original.json
+description: >-
+  Entity-relationship graph of the Totalis RFQ API, derived from schema $ref
+  links and id-reference fields in the published OpenAPI. The central object is
+  the Rfq (product name "parlay") — created at commit from an ephemeral quote
+  request, quoted by market makers, and settled on-chain as a vault position.
+entities:
+- name: User
+  id_field: id
+  id_format: 'did:privy:...'
+- name: Market
+  id_field: ticker (Kalshi) / condition id (Polymarket)
+- name: EventGroup
+- name: Rfq
+  id_field: id
+  notes: The parlay. Status open → quoted → accepted → confirmed → executed → settled/bought_back, or cancelled/expired.
+- name: Leg
+- name: Quote
+  id_field: id
+- name: Settlement
+  id_field: id
+- name: Cashout
+- name: Wallet
+- name: UserVault
+- name: VaultPositionSummary
+  id_field: position_id
+- name: ApiKey
+  id_field: prefix
+- name: WebhookConfig
+- name: WebhookDelivery
+  id_field: id
+relationships:
+- {from: EventGroup, to: Market, kind: has_many, via: markets}
+- {from: Rfq, to: Leg, kind: has_many, via: legs}
+- {from: Rfq, to: Quote, kind: has_many, via: quotes}
+- {from: Rfq, to: Quote, kind: has_one, via: accepted_quote_id}
+- {from: Rfq, to: User, kind: belongs_to, via: user_id}
+- {from: Rfq, to: User, kind: belongs_to, via: market_maker_id, notes: the backing market maker}
+- {from: Rfq, to: Settlement, kind: has_one, via: settlement}
+- {from: Rfq, to: Cashout, kind: has_one, via: cashout}
+- {from: Rfq, to: VaultPositionSummary, kind: has_one, via: position_id}
+- {from: Quote, to: Rfq, kind: belongs_to, via: rfq_id}
+- {from: Settlement, to: Rfq, kind: belongs_to, via: rfq_id}
+- {from: Settlement, to: LegOutcome, kind: has_many, via: leg_outcomes}
+- {from: Leg, to: Market, kind: belongs_to, via: market_ticker + venue}
+- {from: User, to: Wallet, kind: has_one}
+- {from: User, to: UserVault, kind: has_one}
+- {from: User, to: ApiKey, kind: has_many}
+- {from: User, to: Rfq, kind: has_many}
+- {from: UserVault, to: VaultPositionSummary, kind: has_many, via: positions}
+- {from: WebhookConfig, to: WebhookDelivery, kind: has_many}
+enums:
+  Venue: [kalshi, polymarket]
+  Side: [yes, no]
+  RfqStatus: [open, quoted, accepted, confirmed, executed, settled, bought_back, cancelled, expired]
+  QuoteStatus: quote lifecycle status (see spec)
+  PositionStatus: on-chain position status (see spec)

@@ -1,0 +1,88 @@
+generated: '2026-07-21'
+method: derived
+source: openapi/totalis-openapi-original.json
+status: candidate
+note: >-
+  No official Totalis MCP server was found (checked the official MCP registry —
+  registry.modelcontextprotocol.io returned zero matches — plus npm and the
+  docs). This is a candidate tool list derived from the published OpenAPI
+  operations of the Totalis RFQ API.
+server:
+  name: totalis
+  transport: http
+tools:
+- name: list_markets
+  description: List active prediction markets grouped by event across Kalshi and Polymarket
+  source_operation: openapi/totalis-openapi-original.json#listMarkets
+- name: list_markets_flat
+  description: Flat, paginated feed of every individual market for full-universe sync
+  source_operation: openapi/totalis-openapi-original.json#listMarketsFlat
+- name: get_market
+  description: Fetch a single market by Kalshi ticker or Polymarket condition ID
+  source_operation: openapi/totalis-openapi-original.json#getMarket
+- name: get_or_create_user
+  description: Get the authenticated Totalis user profile
+  source_operation: openapi/totalis-openapi-original.json#getOrCreateUser
+- name: update_username
+  description: Update the account username
+  source_operation: openapi/totalis-openapi-original.json#updateUsername
+- name: check_username
+  description: Check if a username is available
+  source_operation: openapi/totalis-openapi-original.json#checkUsername
+- name: list_api_keys
+  description: List API keys (metadata and prefixes only)
+  source_operation: openapi/totalis-openapi-original.json#listApiKeys
+- name: create_api_key
+  description: Create a new scoped API key (requires Privy JWT or keys:manage)
+  source_operation: openapi/totalis-openapi-original.json#createApiKey
+- name: revoke_api_key
+  description: Revoke an API key by prefix
+  source_operation: openapi/totalis-openapi-original.json#revokeApiKey
+- name: get_wallet
+  description: Get the user wallet snapshot — address, SOL/USDC balances, locked amount
+  source_operation: openapi/totalis-openapi-original.json#getWallet
+- name: get_blockhash
+  description: Get the latest Solana blockhash via the Totalis proxy
+  source_operation: openapi/totalis-openapi-original.json#getBlockhash
+- name: submit_transaction
+  description: Submit a client-signed serialized Solana transaction
+  source_operation: openapi/totalis-openapi-original.json#submitTransaction
+- name: get_user_vault
+  description: The caller's vault state and active position summaries
+  source_operation: openapi/totalis-openapi-original.json#getUserVault
+- name: get_user_portfolio
+  description: Consolidated portfolio — balance, stats, status counts, summary
+  source_operation: openapi/totalis-openapi-original.json#getUserPortfolio
+- name: get_delegation_status
+  description: Check whether the embedded (TEE) wallet has trading delegation enabled
+  source_operation: openapi/totalis-openapi-original.json#getDelegationStatus
+- name: enable_trading
+  description: Confirm TEE wallet delegation and drain any pending welcome airdrop
+  source_operation: openapi/totalis-openapi-original.json#enableTrading
+- name: withdraw_from_wallet
+  description: Withdraw USDC from the embedded wallet to an external Solana address
+  source_operation: openapi/totalis-openapi-original.json#withdrawFromWallet
+- name: list_rfqs
+  description: List the user's parlays (RFQs) with cursor pagination and status filter
+  source_operation: openapi/totalis-openapi-original.json#listRfqsV1
+- name: get_rfq
+  description: Fetch one parlay (RFQ) by id with quotes and settlement detail
+  source_operation: openapi/totalis-openapi-original.json#getRfqV1
+- name: get_pnl
+  description: Realized P&L per day over the requested window (1D / 1W / 1M / ALL)
+  source_operation: openapi/totalis-openapi-original.json#getPnlV1
+- name: get_webhook_config
+  description: Current webhook endpoint config and the subscribable event catalog
+  source_operation: openapi/totalis-openapi-original.json#getWebhookConfig
+- name: set_webhook_config
+  description: Set the webhook endpoint URL and subscribed events
+  source_operation: openapi/totalis-openapi-original.json#setWebhookConfig
+- name: rotate_webhook_secret
+  description: Mint a fresh HMAC signing secret (returned once)
+  source_operation: openapi/totalis-openapi-original.json#rotateWebhookSecret
+- name: list_webhook_deliveries
+  description: Recent webhook delivery attempts, newest first
+  source_operation: openapi/totalis-openapi-original.json#listWebhookDeliveries
+- name: redeliver_webhook_delivery
+  description: Re-queue a delivered or dead-lettered webhook delivery
+  source_operation: openapi/totalis-openapi-original.json#redeliverWebhookDelivery

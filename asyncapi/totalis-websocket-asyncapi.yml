@@ -1,0 +1,67 @@
+# generated: '2026-07-21'
+# method: generated
+# source: https://docs.totalis.trade/guides/websocket + https://docs.totalis.trade/guides/event-catalog
+# Faithful AsyncAPI rendering of the documented Totalis WebSocket. Totalis
+# publishes no AsyncAPI of its own; channels and events below come from the docs.
+asyncapi: 2.6.0
+info:
+  title: Totalis WebSocket
+  version: '1.0.0'
+  description: >-
+    Post-trade events in real time — quote acceptances and confirmations,
+    position creation and settlement. Authenticate after connecting with
+    {"type":"auth","api_key":"<key>"}, then subscribe with
+    {"type":"subscribe","channel":"..."}. Missed events are not redelivered;
+    reconcile via REST reads on reconnect. Keep-alive via {"type":"ping"} /
+    {"type":"pong"}. Early-cashout buyback (position.bought_back) is NOT
+    delivered on this channel — webhook-only.
+externalDocs:
+  description: Totalis WebSocket guide
+  url: https://docs.totalis.trade/guides/websocket
+servers:
+  production:
+    url: wss://api.totalis.trade/ws
+    protocol: wss
+defaultContentType: application/json
+channels:
+  'mm:quotes:{mm_id}':
+    description: >-
+      A market maker's private quote-lifecycle channel — accepted, accepted
+      details, confirmed, executed, expired, rejected, withdrawn.
+    parameters:
+      mm_id:
+        description: The market maker id (user_id from auth:success).
+        schema: {type: string}
+    subscribe:
+      operationId: onMmQuoteEvents
+      message:
+        name: quote-lifecycle-events
+        title: 'quote:accepted | mm_quote:accepted | quote:confirmed | quote:executed | quote:expired | quote:rejected | quote:withdrawn'
+        payload:
+          type: object
+          description: >-
+            quote:accepted {quote_id, rfq_id, confirmation_deadline};
+            mm_quote:accepted {rfq_id, quote_id, user_id, quote, exposure_legs,
+            confirmation_deadline, accepted_at}; quote:confirmed {quote_id,
+            rfq_id, execution_id}; quote:executed {quote_id, rfq_id};
+            quote:expired {quote_id, rfq_id}; quote:rejected {quote_id, rfq_id,
+            reason}; quote:withdrawn {quote_id, rfq_id}.
+  'rfq:{rfq_id}':
+    description: Position and status updates for a specific trade.
+    parameters:
+      rfq_id:
+        description: The RFQ (parlay) id.
+        schema: {type: string}
+    subscribe:
+      operationId: onRfqPositionEvents
+      message:
+        name: position-events
+        title: 'position:created | position:settled | position:cancelled | position:error'
+        payload:
+          type: object
+          description: >-
+            position:created {rfq_id, position_pda, timestamp};
+            position:settled {rfq_id, position_pda, outcome, tx_signature,
+            timestamp}; position:cancelled {rfq_id, position_pda, reason,
+            timestamp}; position:error {rfq_id, error, timestamp}.
+            position_pda is the on-chain account address, not a lookup key.

@@ -1,0 +1,105 @@
+generated: '2026-07-21'
+method: searched
+source: >-
+  https://docs.totalis.trade/api-reference/introduction — the cross-cutting
+  request/response conventions of the Totalis RFQ API, enriched from the
+  authentication, webhooks, event-catalog, and real-time channel guides.
+description: >-
+  How the Totalis RFQ API behaves across every operation: authentication style,
+  idempotency posture, pagination, response envelope, error envelope, request
+  limits, rate-limit signaling, versioning, and the four data channels (REST,
+  SSE, WebSocket, webhooks).
+
+base_url: https://api.totalis.trade
+api_style: REST over HTTPS, JSON requests and responses, snake_case field names
+
+authentication:
+  scheme: Scoped API key (X-API-Key header) or Privy JWT bearer (web dashboard)
+  docs: https://docs.totalis.trade/guides/authentication
+  detail: authentication/totalis-authentication.yml
+
+idempotency:
+  supported: false
+  notes: >-
+    No Idempotency-Key request header or equivalent request-idempotency
+    mechanism is documented for REST writes. On the consumer side, webhook
+    deliveries are at-least-once and must be deduplicated on the
+    X-Totalis-Event-Id header (replays reuse the same event id); commit
+    operations use stale-price protection (request_hash / version / book_seq)
+    rather than idempotency keys.
+  docs: https://docs.totalis.trade/guides/webhooks#idempotency--ordering
+
+pagination:
+  style: cursor
+  request_params:
+    cursor: opaque cursor from the previous response's meta.cursor
+    limit: page size (endpoint-specific)
+  response_fields:
+    meta.cursor: opaque string or null
+    meta.has_more: boolean
+  notes: >-
+    Cursors are opaque — do not parse or construct them client-side. The
+    market-maker positions list is offset paginated; everything else is cursor
+    paginated.
+  docs: https://docs.totalis.trade/api-reference/introduction#response-envelope
+
+response_envelope:
+  success: '{ "data": ... } — list endpoints add meta with cursor pagination'
+  error: '{ "error": { "code", "message", "details?" } }'
+
+error_semantics:
+  envelope_field: error.code
+  codes: [VALIDATION_ERROR, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, CONFLICT, RATE_LIMITED,
+    PAYLOAD_TOO_LARGE, INTERNAL_ERROR, SERVICE_UNAVAILABLE]
+  retry_after: On a 429, error.retry_after gives the seconds to wait
+  detail: errors/totalis-problem-types.yml
+
+rate_limits:
+  unauthenticated: 100 requests/minute
+  authenticated: 300 requests/minute
+  headers: [X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset]
+  request_body_limit: 256KB
+  detail: rate-limits/totalis-rate-limits.yml
+
+versioning:
+  scheme: uri-path
+  current: v1
+  notes: >-
+    Authenticated endpoints live under /v1/; public market-data endpoints
+    (/markets, /markets/{ticker}) are unversioned, with a flat variant at
+    /v1/markets/list. The OpenAPI document itself is versioned independently
+    (2.1.0). No deprecation policy or Sunset-header support is documented.
+
+request_tracing:
+  request_id_header: null
+  notes: No request-id/trace header is documented; webhook deliveries carry X-Totalis-Event-Id.
+
+channels:
+  rest: State on demand — portfolio, parlays, settlement detail, P&L, balances
+  sse: >-
+    Pre-trade pricing — per-quote-request streams (GET
+    /v1/quote-requests/{id}/stream), cashout streams, and the market-maker
+    firehose (GET /v1/mm/quote-requests/stream)
+  websocket: >-
+    Post-trade events, live — wss://api.totalis.trade/ws with auth message,
+    channels mm:quotes:{mm_id} and rfq:{rfq_id}
+  webhooks: >-
+    Post-trade events, durable — HMAC-signed POSTs with retries, dead-letter,
+    and replay (see asyncapi/totalis-webhooks-asyncapi.yml)
+  docs: https://docs.totalis.trade/guides/realtime-and-data
+
+field_naming:
+  wire_format: snake_case JSON
+  cross_channel_aliases:
+    - user_cost (quote stage) == user_stake (settlement stage)
+    - mm_cost (quote stage) == mm_risk (settlement stage)
+    - total_payout (quote stage) == payout (settlement stage)
+    - mm_id == market_maker_id == target_mm_id (market maker identity)
+  docs: https://docs.totalis.trade/guides/event-catalog
+
+cross_links:
+  errors: errors/totalis-problem-types.yml
+  authentication: authentication/totalis-authentication.yml
+  rate_limits: rate-limits/totalis-rate-limits.yml
+  lifecycle: lifecycle/totalis-lifecycle.yml
+  events: asyncapi/totalis-webhooks-asyncapi.yml
