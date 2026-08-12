@@ -135,6 +135,8 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Overlay
+  url: overlays/totalis-rfq-overlay.yaml
 - type: Website
   url: https://www.totalis.trade
 - type: DeveloperPortal
