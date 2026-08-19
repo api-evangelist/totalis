@@ -1,0 +1,89 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Totalis RFQ API Keys RFQs API",
+    "version": "2.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-API-Key",
+      "value": "{{X-API-Key}}",
+      "placement": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "RFQs",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List parlays",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/rfqs",
+            "params": [
+              {
+                "name": "status",
+                "value": "open,quoted,accepted",
+                "type": "query",
+                "description": "Filter by RFQ status. Repeatable values are joined with commas (e.g. ?status=open,quoted,accepted)."
+              },
+              {
+                "name": "include",
+                "value": "",
+                "type": "query",
+                "description": "Include quotes array (otherwise null)"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Page size."
+              },
+              {
+                "name": "cursor",
+                "value": "",
+                "type": "query",
+                "description": "Opaque pagination cursor from a previous response's `meta.cursor`. Do not construct manually."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "List your parlays (RFQs), newest first, with cursor pagination. Filter by status (`?status=settled`, or comma-separated `?status=open,quoted`); `?include=quotes` embeds each parlay's quotes."
+        },
+        {
+          "info": {
+            "name": "Get parlay",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/rfqs/:id",
+            "params": [
+              {
+                "name": "id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Fetch one of your parlays (RFQs) by id, with its quotes. Once the parlay is terminal the response also carries its settlement detail — per-leg outcomes, final status, payout, and the settle/buyback transaction signature. An id you don't own returns 404."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

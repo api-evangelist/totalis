@@ -1,0 +1,338 @@
+{
+  "item": [
+    {
+      "id": "6b490943-b143-41a6-b5f6-7f7a77e62b5e",
+      "name": "RFQs",
+      "description": {
+        "content": "",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "50b4807d-893e-4d92-811d-20b55a42d469",
+          "name": "List parlays",
+          "request": {
+            "name": "List parlays",
+            "description": {
+              "content": "List your parlays (RFQs), newest first, with cursor pagination. Filter by status (`?status=settled`, or comma-separated `?status=open,quoted`); `?include=quotes` embeds each parlay's quotes.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v1",
+                "rfqs"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "status",
+                  "value": "<string>,<string>",
+                  "description": "Filter by RFQ status. Repeatable values are joined with commas (e.g. ?status=open,quoted,accepted)."
+                },
+                {
+                  "disabled": false,
+                  "key": "include",
+                  "value": "<string>",
+                  "description": "Include quotes array (otherwise null)"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size."
+                },
+                {
+                  "disabled": false,
+                  "key": "cursor",
+                  "value": "<string>",
+                  "description": "Opaque pagination cursor from a previous response's `meta.cursor`. Do not construct manually."
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "ed7c2c55-6f13-449a-8c94-ae277798cede",
+              "name": "OK",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "rfqs"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "open,quoted,accepted"
+                    },
+                    {
+                      "key": "include",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"rfqs\": [\n      {\n        \"id\": \"1181914b-0d8d-31d6-7bab-d3a34b4f9f07\",\n        \"user_id\": \"string\",\n        \"status\": \"<string>\",\n        \"bet_amount\": 7296.812307388901,\n        \"implied_probability\": 8490.173092300038,\n        \"legs\": [\n          {\n            \"leg_index\": 2453,\n            \"market_ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"side\": \"no\",\n            \"venue\": \"kalshi\",\n            \"market_title\": \"string\",\n            \"event_title\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"venue_url\": \"string\",\n            \"image_url\": \"string\",\n            \"expected_expiration_time\": \"1959-05-31T20:16:44.316Z\",\n            \"current_yes_price\": 0.5281613519614186,\n            \"current_no_price\": 0.33549787169988887,\n            \"outcome\": \"push\"\n          },\n          {\n            \"leg_index\": 37,\n            \"market_ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"side\": \"yes\",\n            \"venue\": \"polymarket\",\n            \"market_title\": \"string\",\n            \"event_title\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"venue_url\": \"string\",\n            \"image_url\": \"string\",\n            \"expected_expiration_time\": \"1957-09-27T22:58:35.527Z\",\n            \"current_yes_price\": 0.22393747899528482,\n            \"current_no_price\": 0.3386636960679442,\n            \"outcome\": \"pending\"\n          }\n        ],\n        \"quotes\": [\n          {\n            \"id\": \"63f80fee-5653-8293-4624-6c57611304c3\",\n            \"rfq_id\": \"45f03ed3-f2ba-ba63-8cbc-773cdfa73cd8\",\n            \"payout_odds\": 438.2970676213239,\n            \"user_cost\": 2306.748139162759,\n            \"mm_cost\": 152.0624891519351,\n            \"total_payout\": 9751.536808052286,\n            \"leg_prices\": [\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              },\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              }\n            ],\n            \"status\": \"pending\",\n            \"valid_until\": \"2017-01-08T14:43:40.185Z\",\n            \"created_at\": \"2003-11-06T05:14:39.394Z\",\n            \"updated_at\": \"1986-12-30T12:28:12.463Z\"\n          },\n          {\n            \"id\": \"f5b2174e-68fb-89c5-2445-d618e8396969\",\n            \"rfq_id\": \"507db575-75ae-b6dd-5ffc-79f1b5afbea3\",\n            \"payout_odds\": 987.7503559503656,\n            \"user_cost\": 6623.217753622661,\n            \"mm_cost\": 8729.290338284674,\n            \"total_payout\": 3579.900294831373,\n            \"leg_prices\": [\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              },\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              }\n            ],\n            \"status\": \"pending\",\n            \"valid_until\": \"2000-10-28T02:15:54.009Z\",\n            \"created_at\": \"1996-01-05T15:25:11.718Z\",\n            \"updated_at\": \"1986-03-18T16:21:20.525Z\"\n          }\n        ],\n        \"accepted_quote_id\": \"e7035787-0061-5501-1de7-fb27420f1228\",\n        \"market_maker_id\": \"string\",\n        \"position_pda\": \"string\",\n        \"position_id\": \"string\",\n        \"position_status\": \"expired\",\n        \"position_error\": \"string\",\n        \"cancellation_reason\": \"string\",\n        \"is_failed\": false,\n        \"fee_amount\": 3179.1807866397194,\n        \"settlement\": {\n          \"id\": \"0632d1d7-69d7-0dfd-6b72-f98421fbd4d4\",\n          \"rfq_id\": \"99704141-e26c-fcc3-01b6-e0937e8adfac\",\n          \"winner\": \"mm\",\n          \"payout\": 6590.897585801535,\n          \"user_stake\": 8852.26277058349,\n          \"mm_risk\": 6533.759664831988,\n          \"fee_amount\": 276.140121419024,\n          \"settle_tx\": \"string\",\n          \"settled_at\": \"1994-05-13T17:26:30.334Z\"\n        },\n        \"settled_at\": \"2022-05-13T05:27:15.082Z\",\n        \"cashout\": {\n          \"realized_pnl\": 6411.367064985183,\n          \"amount\": 6044.393447188884,\n          \"mm_pays_user\": false,\n          \"cashed_out_at\": \"1997-02-01T21:13:21.534Z\"\n        },\n        \"create_position_tx\": \"string\",\n        \"settle_tx\": \"string\",\n        \"cancel_tx\": \"string\",\n        \"buyback_tx\": \"string\",\n        \"created_at\": \"1971-09-14T18:50:20.342Z\",\n        \"updated_at\": \"1958-06-13T06:17:45.911Z\",\n        \"expires_at\": \"1981-01-16T21:04:58.986Z\"\n      },\n      {\n        \"id\": \"dd3d7677-fdc1-95d7-f4fd-8b8f9034ddbc\",\n        \"user_id\": \"string\",\n        \"status\": \"<string>\",\n        \"bet_amount\": 5247.289105931335,\n        \"implied_probability\": 1300.3335050303256,\n        \"legs\": [\n          {\n            \"leg_index\": 5505,\n            \"market_ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"side\": \"yes\",\n            \"venue\": \"polymarket\",\n            \"market_title\": \"string\",\n            \"event_title\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"venue_url\": \"string\",\n            \"image_url\": \"string\",\n            \"expected_expiration_time\": \"2016-09-17T12:07:35.474Z\",\n            \"current_yes_price\": 0.08424963466640834,\n            \"current_no_price\": 0.19309883874887745,\n            \"outcome\": \"push\"\n          },\n          {\n            \"leg_index\": 5157,\n            \"market_ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"side\": \"yes\",\n            \"venue\": \"kalshi\",\n            \"market_title\": \"string\",\n            \"event_title\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"venue_url\": \"string\",\n            \"image_url\": \"string\",\n            \"expected_expiration_time\": \"2016-04-06T11:21:02.132Z\",\n            \"current_yes_price\": 0.21358898480994482,\n            \"current_no_price\": 0.8020080140488902,\n            \"outcome\": \"loss\"\n          }\n        ],\n        \"quotes\": [\n          {\n            \"id\": \"7215303d-fef3-31a9-ad0f-2baf4d003b9b\",\n            \"rfq_id\": \"73d361e7-0f1f-ce35-8f8d-361f57beea4b\",\n            \"payout_odds\": 612.9838688881323,\n            \"user_cost\": 7246.433162082567,\n            \"mm_cost\": 5940.682311180817,\n            \"total_payout\": 4504.163905152415,\n            \"leg_prices\": [\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              },\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              }\n            ],\n            \"status\": \"expired\",\n            \"valid_until\": \"1991-04-16T14:09:50.932Z\",\n            \"created_at\": \"1983-07-28T03:59:12.276Z\",\n            \"updated_at\": \"1979-06-16T13:17:41.767Z\"\n          },\n          {\n            \"id\": \"e229c27d-184b-f3d3-db59-e9a330d5599e\",\n            \"rfq_id\": \"d233c648-0f97-99e6-f2dd-762d8fc76029\",\n            \"payout_odds\": 370.9249563416869,\n            \"user_cost\": 6109.809205608531,\n            \"mm_cost\": 7031.653681142709,\n            \"total_payout\": 9882.875013293917,\n            \"leg_prices\": [\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              },\n              {\n                \"leg_id\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                },\n                \"leg_odds\": {\n                  \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                }\n              }\n            ],\n            \"status\": \"expired\",\n            \"valid_until\": \"1980-11-20T20:44:41.130Z\",\n            \"created_at\": \"1985-03-17T14:45:15.003Z\",\n            \"updated_at\": \"2012-02-15T08:26:17.417Z\"\n          }\n        ],\n        \"accepted_quote_id\": \"29a0a7b9-4495-2b23-9d3f-67a2b0aadfd7\",\n        \"market_maker_id\": \"string\",\n        \"position_pda\": \"string\",\n        \"position_id\": \"string\",\n        \"position_status\": \"bought_back_pending_db\",\n        \"position_error\": \"string\",\n        \"cancellation_reason\": \"string\",\n        \"is_failed\": false,\n        \"fee_amount\": 6795.199528237556,\n        \"settlement\": {\n          \"id\": \"1c16fea9-437b-eb30-c6b2-f5201e28e3fa\",\n          \"rfq_id\": \"51b99658-f206-d3ac-aa86-84f25c2f16fb\",\n          \"winner\": \"user\",\n          \"payout\": 5766.192922376883,\n          \"user_stake\": 6864.298868932606,\n          \"mm_risk\": 3759.706144231946,\n          \"fee_amount\": 248.88798824381553,\n          \"settle_tx\": \"string\",\n          \"settled_at\": \"1963-04-07T11:02:28.013Z\"\n        },\n        \"settled_at\": \"2020-09-10T21:10:00.073Z\",\n        \"cashout\": {\n          \"realized_pnl\": 8613.501457851644,\n          \"amount\": 8287.564681357173,\n          \"mm_pays_user\": true,\n          \"cashed_out_at\": \"1966-01-31T08:52:39.609Z\"\n        },\n        \"create_position_tx\": \"string\",\n        \"settle_tx\": \"string\",\n        \"cancel_tx\": \"string\",\n        \"buyback_tx\": \"string\",\n        \"created_at\": \"1970-12-18T13:56:24.759Z\",\n        \"updated_at\": \"1996-03-24T02:16:09.784Z\",\n        \"expires_at\": \"1997-07-14T17:28:07.318Z\"\n      }\n    ]\n  },\n  \"meta\": {\n    \"cursor\": \"string\",\n    \"has_more\": false,\n    \"limit\": 7568,\n    \"offset\": 6081,\n    \"total\": 1598\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "3101bd7a-42a9-4565-9fdc-e721339279dc",
+          "name": "Get parlay",
+          "request": {
+            "name": "Get parlay",
+            "description": {
+              "content": "Fetch one of your parlays (RFQs) by id, with its quotes. Once the parlay is terminal the response also carries its settlement detail — per-leg outcomes, final status, payout, and the settle/buyback transaction signature. An id you don't own returns 404.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v1",
+                "rfqs",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "id",
+                  "description": "(Required) "
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "3f52de34-4708-48e2-8c42-07bce92f346d",
+              "name": "OK",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "rfqs",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"bd93f374-88c4-4f94-5065-0569b99a5e06\",\n    \"user_id\": \"string\",\n    \"status\": \"<string>\",\n    \"bet_amount\": 3529.2280847629277,\n    \"implied_probability\": 7504.522936894305,\n    \"legs\": [\n      {\n        \"leg_index\": 2070,\n        \"market_ticker\": \"string\",\n        \"event_ticker\": \"string\",\n        \"side\": \"yes\",\n        \"venue\": \"kalshi\",\n        \"market_title\": \"string\",\n        \"event_title\": \"string\",\n        \"yes_sub_title\": \"string\",\n        \"no_sub_title\": \"string\",\n        \"venue_url\": \"string\",\n        \"image_url\": \"string\",\n        \"expected_expiration_time\": \"1958-06-28T14:30:45.490Z\",\n        \"current_yes_price\": 0.3438505895165175,\n        \"current_no_price\": 0.5821474049858959,\n        \"outcome\": \"win\"\n      },\n      {\n        \"leg_index\": 5192,\n        \"market_ticker\": \"string\",\n        \"event_ticker\": \"string\",\n        \"side\": \"no\",\n        \"venue\": \"polymarket\",\n        \"market_title\": \"string\",\n        \"event_title\": \"string\",\n        \"yes_sub_title\": \"string\",\n        \"no_sub_title\": \"string\",\n        \"venue_url\": \"string\",\n        \"image_url\": \"string\",\n        \"expected_expiration_time\": \"1964-07-31T17:36:43.255Z\",\n        \"current_yes_price\": 0.3657832164322268,\n        \"current_no_price\": 0.4363734573317306,\n        \"outcome\": \"loss\"\n      }\n    ],\n    \"quotes\": [\n      {\n        \"id\": \"7404cefb-dd1f-66fc-ed88-abd9a4d1b311\",\n        \"rfq_id\": \"f7debc3a-d0df-3c2e-90b3-0195b4d49320\",\n        \"payout_odds\": 636.3522033545958,\n        \"user_cost\": 72.1820448168653,\n        \"mm_cost\": 8261.691193211667,\n        \"total_payout\": 5429.5662109221175,\n        \"leg_prices\": [\n          {\n            \"leg_id\": \"5e5849fc-e7cc-7d69-8ff7-e97423cccc54\",\n            \"leg_odds\": 8926.266375779009\n          },\n          {\n            \"leg_id\": \"ec02fc01-a154-67fa-cb52-2109d40e8c60\",\n            \"leg_odds\": 5374.066724315942\n          }\n        ],\n        \"status\": \"pending\",\n        \"valid_until\": \"2004-05-21T11:25:18.728Z\",\n        \"created_at\": \"2021-10-13T13:08:34.076Z\",\n        \"updated_at\": \"1973-07-23T02:57:30.714Z\"\n      },\n      {\n        \"id\": \"de95ee3c-259c-f3a5-be8c-eb2db961d4f5\",\n        \"rfq_id\": \"9a580be7-969c-80fb-0eb1-15c6f93a6235\",\n        \"payout_odds\": 319.7367832473368,\n        \"user_cost\": 5007.462389997316,\n        \"mm_cost\": 6858.258121310672,\n        \"total_payout\": 6687.033702142386,\n        \"leg_prices\": [\n          {\n            \"leg_id\": \"79888dab-ae5f-1e11-92cc-f8658d999e59\",\n            \"leg_odds\": 5006.81483078546\n          },\n          {\n            \"leg_id\": \"67911d37-5215-1da1-30b8-142f30f7bb68\",\n            \"leg_odds\": 1804.7673699928114\n          }\n        ],\n        \"status\": \"expired\",\n        \"valid_until\": \"2009-07-18T01:54:56.300Z\",\n        \"created_at\": \"1998-06-05T11:04:46.910Z\",\n        \"updated_at\": \"2015-04-27T21:49:26.662Z\"\n      }\n    ],\n    \"accepted_quote_id\": \"0608faa9-d936-d860-59a5-0cf236425612\",\n    \"market_maker_id\": \"string\",\n    \"position_pda\": \"string\",\n    \"position_id\": \"string\",\n    \"position_status\": \"reconciling_bought_back_db\",\n    \"position_error\": \"string\",\n    \"cancellation_reason\": \"string\",\n    \"is_failed\": false,\n    \"fee_amount\": 5019.335357047005,\n    \"settlement\": {\n      \"id\": \"a1fe9395-0a0a-37b8-bc61-85875c8aa8c4\",\n      \"rfq_id\": \"9fce290b-5d94-878c-0999-633486d7e19a\",\n      \"winner\": \"mm\",\n      \"payout\": 9982.835757229304,\n      \"user_stake\": 219.8275911912495,\n      \"mm_risk\": 2847.2979472869074,\n      \"fee_amount\": 9676.044017609494,\n      \"settle_tx\": \"string\",\n      \"settled_at\": \"2013-09-29T06:58:27.868Z\"\n    },\n    \"settled_at\": \"2006-02-24T12:11:10.234Z\",\n    \"cashout\": {\n      \"realized_pnl\": 8350.291733866812,\n      \"amount\": 7481.594591046443,\n      \"mm_pays_user\": false,\n      \"cashed_out_at\": \"1971-07-09T19:50:43.933Z\"\n    },\n    \"create_position_tx\": \"string\",\n    \"settle_tx\": \"string\",\n    \"cancel_tx\": \"string\",\n    \"buyback_tx\": \"string\",\n    \"created_at\": \"1979-08-14T02:19:00.776Z\",\n    \"updated_at\": \"1952-10-02T21:11:33.250Z\",\n    \"expires_at\": \"2019-08-28T20:51:13.190Z\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "cd02ebc2-c036-419e-a784-b00e36eb5360",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "rfqs",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Resource not found\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.totalis.trade",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}"
+      },
+      {
+        "key": "in",
+        "value": "header"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "e03fbee7-9b0e-46a1-8eb2-b75c3d86ff78",
+    "name": "Totalis RFQ API Keys RFQs API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.\n\n**Wire format**: snake_case JSON. All successful responses are wrapped in `{ \"data\": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ \"error\": { code, message, details? } }` envelope.\n\n**Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.\n\n**Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.\n\n**Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.",
+      "type": "text/plain"
+    }
+  }
+}

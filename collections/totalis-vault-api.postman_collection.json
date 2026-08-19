@@ -1,0 +1,137 @@
+{
+  "item": [
+    {
+      "id": "c47a2d42-582b-4d8d-bd19-cfb10d1577af",
+      "name": "Vault",
+      "description": {
+        "content": "",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "bf1c1727-d3ac-4b4e-9de1-244fdb765e74",
+          "name": "Get user vault state and active positions",
+          "request": {
+            "name": "Get user vault state and active positions",
+            "description": {
+              "content": "Returns the user's vault balance and active positions. Returns data: null\n(200 OK) if the user has no vault yet (vault is created on first trade).\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v1",
+                "vault"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "c6e77b73-680c-4a02-9618-93e731e516f4",
+              "name": "OK — vault state or null if no vault exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "vault"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"vault_pda\": \"string\",\n    \"vault_token_account\": \"string\",\n    \"gross_balance\": 8934.071863076759,\n    \"locked_collateral\": 8111.020501626666,\n    \"free_balance\": 9546.895340138237,\n    \"positions\": [\n      {\n        \"position_id\": \"string\",\n        \"rfq_id\": \"f2787153-55ba-59fd-14c6-e8eca6a5c2df\",\n        \"user_stake\": 7114.856894313708,\n        \"mm_risk\": 4193.641027131128,\n        \"total_payout\": 3718.977723716874,\n        \"status\": \"cancelling\",\n        \"created_at\": \"1998-08-23T17:39:06.313Z\"\n      },\n      {\n        \"position_id\": \"string\",\n        \"rfq_id\": \"eef7389d-7b78-c953-eff9-954e522ca79c\",\n        \"user_stake\": 2679.2803621604735,\n        \"mm_risk\": 7593.976365328026,\n        \"total_payout\": 3537.257397391614,\n        \"status\": \"reconciling_bought_back_db\",\n        \"created_at\": \"1948-12-02T01:22:20.426Z\"\n      }\n    ]\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.totalis.trade",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}"
+      },
+      {
+        "key": "in",
+        "value": "header"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "6633ad71-4664-4120-a90c-a468714b3a25",
+    "name": "Totalis RFQ API Keys Vault API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.\n\n**Wire format**: snake_case JSON. All successful responses are wrapped in `{ \"data\": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ \"error\": { code, message, details? } }` envelope.\n\n**Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.\n\n**Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.\n\n**Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.",
+      "type": "text/plain"
+    }
+  }
+}

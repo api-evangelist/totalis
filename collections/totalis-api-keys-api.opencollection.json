@@ -1,0 +1,83 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Totalis RFQ API Keys API",
+    "version": "2.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-API-Key",
+      "value": "{{X-API-Key}}",
+      "placement": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "API Keys",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List API Keys",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/api-keys",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "List the authenticated user's API keys. Only metadata and prefixes are returned — the original secret is never re-exposed."
+        },
+        {
+          "info": {
+            "name": "Create API Key",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.totalis.trade/v1/api-keys",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Create a new API key for the authenticated user. The full secret is returned **once** in `data.key` — save it immediately. Subsequent listings only show the prefix. Requires Privy JWT auth (web dashboard); cannot be called with an existing API key."
+        },
+        {
+          "info": {
+            "name": "Revoke API Key",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.totalis.trade/v1/api-keys/:prefix",
+            "params": [
+              {
+                "name": "prefix",
+                "value": "",
+                "type": "path",
+                "description": "Key prefix returned by `listApiKeys` / `createApiKey` (`key_prefix`)."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Revoke one of the authenticated user's API keys by prefix. Takes effect immediately on all subsequent requests. Returns `204 No Content`."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

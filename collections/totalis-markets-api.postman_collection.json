@@ -1,0 +1,1005 @@
+{
+  "item": [
+    {
+      "id": "cbcc40e4-5410-4898-b161-8dc0fd4b7ba7",
+      "name": "Markets",
+      "description": {
+        "content": "Cached Kalshi and Polymarket market data.",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "3d5362dc-24d5-43f6-85da-fb6d9a5358ce",
+          "name": "List Markets",
+          "request": {
+            "name": "List Markets",
+            "description": {
+              "content": "List active markets grouped by event across supported venues (Kalshi and Polymarket). Filters: `category`, `venue`, `subcategory` (validated against the selected category), `frequency` (`daily`/`weekly`/`monthly`/`hourly`), `date_filter` (time bucket), and `search`. Pagination is cursor-based at the event level. The response includes `available_subcategories` and `available_frequencies` so clients can drive filter chips from the same result set.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "markets"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "category",
+                  "value": "<string>",
+                  "description": "Filter by category. Pass `all` to disable the default category filter."
+                },
+                {
+                  "disabled": false,
+                  "key": "venue",
+                  "value": "<string>",
+                  "description": "Filter by venue. Omit to include all venues."
+                },
+                {
+                  "disabled": false,
+                  "key": "subcategory",
+                  "value": "<string>",
+                  "description": "Filter events by subcategory. Valid values depend on the selected `category` (requires `category` to also be set)."
+                },
+                {
+                  "disabled": false,
+                  "key": "frequency",
+                  "value": "<string>",
+                  "description": "Filter events by the cadence of the underlying series. `other` is intentionally rejected — it's a residual response bucket, not a filter target."
+                },
+                {
+                  "disabled": false,
+                  "key": "date_filter",
+                  "value": "<string>",
+                  "description": "Time bucket filter. If omitted, a default 7-day horizon is applied. Pass `all` to retrieve all active markets regardless of close date."
+                },
+                {
+                  "disabled": false,
+                  "key": "search",
+                  "value": "<string>",
+                  "description": "Full-text search across event/market titles."
+                },
+                {
+                  "disabled": false,
+                  "key": "cursor",
+                  "value": "<string>",
+                  "description": "Opaque pagination cursor from a previous response's `meta.cursor`. Do not construct manually."
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "21",
+                  "description": "Events per page. Default 21, max 100. The product `limit × markets_per_event` must not exceed 2000."
+                },
+                {
+                  "disabled": false,
+                  "key": "markets_per_event",
+                  "value": "10",
+                  "description": "Max markets returned per event group. Default 10, max 50."
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "6e2c2d3b-ac6d-4f8e-85b0-c4212248dd65",
+              "name": "Events grouped by event_ticker, plus subcategory/frequency facets for the current result set",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "markets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "subcategory",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "frequency",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "date_filter",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "search",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "21"
+                    },
+                    {
+                      "key": "markets_per_event",
+                      "value": "10"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"events\": [\n      {\n        \"event_ticker\": \"string\",\n        \"series_ticker\": \"string\",\n        \"category\": \"string\",\n        \"total_markets\": 5439,\n        \"markets\": [\n          {\n            \"ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"series_ticker\": \"string\",\n            \"title\": \"string\",\n            \"subtitle\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"bet_group\": \"string\",\n            \"category\": \"string\",\n            \"subcategory\": \"string\",\n            \"frequency\": \"string\",\n            \"venue\": \"<string>\",\n            \"status\": \"string\",\n            \"yes_bid\": 5920.434809951938,\n            \"yes_ask\": 830.8678936843805,\n            \"no_bid\": 4612.208630224517,\n            \"no_ask\": 8130.045704207387,\n            \"last_price\": 8238.633622644684,\n            \"price_to_beat\": 9809.419652555911,\n            \"volume\": 9906,\n            \"volume_24h\": 9787,\n            \"open_interest\": 6100,\n            \"venue_url\": \"string\",\n            \"open_time\": \"1974-03-24T09:41:00.885Z\",\n            \"close_time\": \"1949-10-13T12:40:12.937Z\",\n            \"expiration_time\": \"1950-08-17T02:05:13.933Z\",\n            \"exclusion_keys\": [\n              \"string\",\n              \"string\"\n            ]\n          },\n          {\n            \"ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"series_ticker\": \"string\",\n            \"title\": \"string\",\n            \"subtitle\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"bet_group\": \"string\",\n            \"category\": \"string\",\n            \"subcategory\": \"string\",\n            \"frequency\": \"string\",\n            \"venue\": \"<string>\",\n            \"status\": \"string\",\n            \"yes_bid\": 5780.411086740211,\n            \"yes_ask\": 1290.761570839163,\n            \"no_bid\": 4413.355291060401,\n            \"no_ask\": 9323.928633540658,\n            \"last_price\": 9467.376863610598,\n            \"price_to_beat\": 5065.844157349877,\n            \"volume\": 3013,\n            \"volume_24h\": 5101,\n            \"open_interest\": 6953,\n            \"venue_url\": \"string\",\n            \"open_time\": \"2000-10-10T00:13:32.981Z\",\n            \"close_time\": \"1969-09-24T05:54:07.664Z\",\n            \"expiration_time\": \"1957-10-12T20:51:28.736Z\",\n            \"exclusion_keys\": [\n              \"string\",\n              \"string\"\n            ]\n          }\n        ],\n        \"series_title\": \"string\",\n        \"event_title\": \"string\",\n        \"event_sub_title\": \"string\",\n        \"image_url\": \"string\"\n      },\n      {\n        \"event_ticker\": \"string\",\n        \"series_ticker\": \"string\",\n        \"category\": \"string\",\n        \"total_markets\": 9861,\n        \"markets\": [\n          {\n            \"ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"series_ticker\": \"string\",\n            \"title\": \"string\",\n            \"subtitle\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"bet_group\": \"string\",\n            \"category\": \"string\",\n            \"subcategory\": \"string\",\n            \"frequency\": \"string\",\n            \"venue\": \"<string>\",\n            \"status\": \"string\",\n            \"yes_bid\": 9852.481896556536,\n            \"yes_ask\": 4660.349263668112,\n            \"no_bid\": 6303.652049256244,\n            \"no_ask\": 5457.716799726625,\n            \"last_price\": 4217.274608885919,\n            \"price_to_beat\": 2879.5074883655025,\n            \"volume\": 4962,\n            \"volume_24h\": 9653,\n            \"open_interest\": 5525,\n            \"venue_url\": \"string\",\n            \"open_time\": \"1991-02-25T18:48:15.012Z\",\n            \"close_time\": \"1997-04-14T02:24:49.459Z\",\n            \"expiration_time\": \"1957-07-26T12:50:55.454Z\",\n            \"exclusion_keys\": [\n              \"string\",\n              \"string\"\n            ]\n          },\n          {\n            \"ticker\": \"string\",\n            \"event_ticker\": \"string\",\n            \"series_ticker\": \"string\",\n            \"title\": \"string\",\n            \"subtitle\": \"string\",\n            \"yes_sub_title\": \"string\",\n            \"no_sub_title\": \"string\",\n            \"bet_group\": \"string\",\n            \"category\": \"string\",\n            \"subcategory\": \"string\",\n            \"frequency\": \"string\",\n            \"venue\": \"<string>\",\n            \"status\": \"string\",\n            \"yes_bid\": 3432.844237330913,\n            \"yes_ask\": 2451.866762746403,\n            \"no_bid\": 6891.23399493669,\n            \"no_ask\": 6348.942596453744,\n            \"last_price\": 9973.519308480483,\n            \"price_to_beat\": 5893.926591505201,\n            \"volume\": 4995,\n            \"volume_24h\": 466,\n            \"open_interest\": 9690,\n            \"venue_url\": \"string\",\n            \"open_time\": \"2023-11-24T15:30:56.733Z\",\n            \"close_time\": \"2003-11-19T08:17:00.493Z\",\n            \"expiration_time\": \"1953-08-03T16:28:27.011Z\",\n            \"exclusion_keys\": [\n              \"string\",\n              \"string\"\n            ]\n          }\n        ],\n        \"series_title\": \"string\",\n        \"event_title\": \"string\",\n        \"event_sub_title\": \"string\",\n        \"image_url\": \"string\"\n      }\n    ]\n  },\n  \"meta\": {\n    \"cursor\": \"string\",\n    \"has_more\": true,\n    \"limit\": 482,\n    \"offset\": 6004,\n    \"total\": 5671,\n    \"total_events\": 6426,\n    \"available_subcategories\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"available_frequencies\": [\n      \"weekly\",\n      \"weekly\"\n    ]\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "cf39113e-936f-4122-9537-e52390a6c299",
+              "name": "Validation error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "markets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "subcategory",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "frequency",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "date_filter",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "search",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "21"
+                    },
+                    {
+                      "key": "markets_per_event",
+                      "value": "10"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"FORBIDDEN\",\n    \"message\": \"string\",\n    \"details\": {},\n    \"retry_after\": 8584\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "dde942b6-5340-4832-b38e-344a299d2ff2",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "markets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "subcategory",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "frequency",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "date_filter",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "search",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "21"
+                    },
+                    {
+                      "key": "markets_per_event",
+                      "value": "10"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"FORBIDDEN\",\n    \"message\": \"string\",\n    \"details\": {},\n    \"retry_after\": 8584\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "7ad26ce7-fb31-4d5e-b336-9b4d0c1089d7",
+          "name": "List markets (flat)",
+          "request": {
+            "name": "List markets (flat)",
+            "description": {
+              "content": "Returns a paginated list of individual markets, most-traded first. Unlike the event-grouped `GET /markets`, results aren't grouped by event and are never capped per event, so every market is reachable. Filter by venue, category, subcategory, or one or more series.\n\nPaginate with `cursor` until it returns `null`; `meta.total` is the total number of matches. For a complete sync, de-duplicate by `ticker` — markets with equal volume aren't guaranteed a stable order between requests. Scoping to a `subcategory` or `series_ticker` set avoids this entirely.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v1",
+                "markets",
+                "list"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "category",
+                  "value": "<string>",
+                  "description": "Filter by category, e.g. `sports` or `crypto`."
+                },
+                {
+                  "disabled": false,
+                  "key": "venue",
+                  "value": "<string>",
+                  "description": "Filter by venue: `kalshi` or `polymarket`."
+                },
+                {
+                  "disabled": false,
+                  "key": "subcategory",
+                  "value": "<string>",
+                  "description": "Filter by subcategory, e.g. `world_cup`. Requires `category`."
+                },
+                {
+                  "disabled": false,
+                  "key": "frequency",
+                  "value": "<string>",
+                  "description": "Filter by series cadence: `daily`, `weekly`, `monthly`, or `hourly`."
+                },
+                {
+                  "disabled": false,
+                  "key": "series_ticker",
+                  "value": "<string>",
+                  "description": "Filter by one or more series, comma-separated and case-sensitive, e.g. `KXWCAST,KXWCTCORNERS`. Up to 100."
+                },
+                {
+                  "disabled": false,
+                  "key": "status",
+                  "value": "active,open",
+                  "description": "Filter by status. Defaults to tradeable markets (`active,open`); pass a comma-separated list of `active`, `open`, `closed`, `settled`, `finalized`, or `all`. An empty or unrecognised value returns 400."
+                },
+                {
+                  "disabled": false,
+                  "key": "cursor",
+                  "value": "<string>",
+                  "description": "Opaque pagination cursor from a previous response's `meta.cursor`. Do not construct manually."
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "100",
+                  "description": "Number of markets per page, from 1 to 500. Defaults to 100. Only the first 10,000 matches are reachable — narrow the filters to page further."
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "144f97b7-3825-4e54-b691-7ad93f23d811",
+              "name": "OK",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "markets",
+                    "list"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "subcategory",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "frequency",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "series_ticker",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active,open"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "100"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "disabled": false,
+                  "key": "Cache-Control",
+                  "value": "public, max-age=15, stale-while-revalidate=60",
+                  "description": ""
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"markets\": [\n      {\n        \"ticker\": \"string\",\n        \"event_ticker\": \"string\",\n        \"series_ticker\": \"string\",\n        \"title\": \"string\",\n        \"subtitle\": \"string\",\n        \"yes_sub_title\": \"string\",\n        \"no_sub_title\": \"string\",\n        \"bet_group\": \"string\",\n        \"category\": \"string\",\n        \"subcategory\": \"string\",\n        \"frequency\": \"string\",\n        \"venue\": \"<string>\",\n        \"status\": \"string\",\n        \"yes_bid\": 1996.7455602314221,\n        \"yes_ask\": 5447.721638589782,\n        \"no_bid\": 1290.1243167914733,\n        \"no_ask\": 5843.083176952199,\n        \"last_price\": 4959.696743129199,\n        \"price_to_beat\": 4793.192496422949,\n        \"volume\": 9687,\n        \"volume_24h\": 4179,\n        \"open_interest\": 1337,\n        \"venue_url\": \"string\",\n        \"open_time\": \"2005-10-12T20:44:18.306Z\",\n        \"close_time\": \"1996-06-06T02:34:20.885Z\",\n        \"expiration_time\": \"1968-05-02T18:18:53.998Z\",\n        \"exclusion_keys\": [\n          \"string\",\n          \"string\"\n        ]\n      },\n      {\n        \"ticker\": \"string\",\n        \"event_ticker\": \"string\",\n        \"series_ticker\": \"string\",\n        \"title\": \"string\",\n        \"subtitle\": \"string\",\n        \"yes_sub_title\": \"string\",\n        \"no_sub_title\": \"string\",\n        \"bet_group\": \"string\",\n        \"category\": \"string\",\n        \"subcategory\": \"string\",\n        \"frequency\": \"string\",\n        \"venue\": \"<string>\",\n        \"status\": \"string\",\n        \"yes_bid\": 4477.302333559516,\n        \"yes_ask\": 3592.090225176152,\n        \"no_bid\": 4325.502422646953,\n        \"no_ask\": 7636.389423607038,\n        \"last_price\": 362.6374778822217,\n        \"price_to_beat\": 1005.0511518287519,\n        \"volume\": 2358,\n        \"volume_24h\": 8965,\n        \"open_interest\": 9692,\n        \"venue_url\": \"string\",\n        \"open_time\": \"1959-01-22T11:39:12.077Z\",\n        \"close_time\": \"1977-08-09T03:20:42.447Z\",\n        \"expiration_time\": \"1972-11-03T01:00:12.383Z\",\n        \"exclusion_keys\": [\n          \"string\",\n          \"string\"\n        ]\n      }\n    ]\n  },\n  \"meta\": {\n    \"cursor\": \"string\",\n    \"has_more\": true,\n    \"limit\": 286,\n    \"offset\": 5522,\n    \"total\": 4084\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "aa9ffa9d-90e6-4557-871a-04424f102e60",
+              "name": "Validation error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "markets",
+                    "list"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "subcategory",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "frequency",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "series_ticker",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active,open"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "100"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"FORBIDDEN\",\n    \"message\": \"string\",\n    \"details\": {},\n    \"retry_after\": 8584\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "029c6402-69fc-438b-b22b-fb27f9ceb1d5",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "markets",
+                    "list"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "subcategory",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "frequency",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "series_ticker",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active,open"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "100"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"FORBIDDEN\",\n    \"message\": \"string\",\n    \"details\": {},\n    \"retry_after\": 8584\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e00466a5-0f81-40ec-8c3b-4ede8cc097de",
+              "name": "Market index unavailable",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v1",
+                    "markets",
+                    "list"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "subcategory",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "frequency",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "series_ticker",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active,open"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "100"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"FORBIDDEN\",\n    \"message\": \"string\",\n    \"details\": {},\n    \"retry_after\": 8584\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "929cea6d-585c-4248-a89b-db63914505a7",
+          "name": "Get Market",
+          "request": {
+            "name": "Get Market",
+            "description": {
+              "content": "Fetch a single Kalshi market by ticker or a single Polymarket market by condition ID. When `venue` is omitted, the API infers Polymarket for condition IDs that look like `0x...`; otherwise it looks up the market as Kalshi.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "markets",
+                ":ticker"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "venue",
+                  "value": "<string>",
+                  "description": "Optional venue hint. Use this when the caller already knows whether the ticker belongs to Kalshi or Polymarket."
+                }
+              ],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "ticker",
+                  "description": "(Required) Kalshi market ticker or Polymarket `condition_id`."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "8be05e34-17b7-48ee-8a0d-e0255e96399b",
+              "name": "Market details",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "markets",
+                    ":ticker"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "ticker",
+                      "description": "(Required) Kalshi market ticker or Polymarket `condition_id`."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"ticker\": \"string\",\n    \"event_ticker\": \"string\",\n    \"series_ticker\": \"string\",\n    \"title\": \"string\",\n    \"subtitle\": \"string\",\n    \"yes_sub_title\": \"string\",\n    \"no_sub_title\": \"string\",\n    \"bet_group\": \"string\",\n    \"category\": \"string\",\n    \"subcategory\": \"string\",\n    \"frequency\": \"string\",\n    \"venue\": \"<string>\",\n    \"status\": \"string\",\n    \"yes_bid\": 3615.7268705562574,\n    \"yes_ask\": 8707.144122716276,\n    \"no_bid\": 5563.474419005848,\n    \"no_ask\": 8731.824111311975,\n    \"last_price\": 4699.13420924328,\n    \"price_to_beat\": 7261.426567949214,\n    \"volume\": 608,\n    \"volume_24h\": 3025,\n    \"open_interest\": 4005,\n    \"venue_url\": \"string\",\n    \"open_time\": \"2014-01-02T12:29:30.674Z\",\n    \"close_time\": \"2025-06-11T21:31:34.754Z\",\n    \"expiration_time\": \"2011-10-12T17:12:24.746Z\",\n    \"exclusion_keys\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2f452abc-d79a-493a-b9e2-af06838ddc86",
+              "name": "Validation error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "markets",
+                    ":ticker"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "ticker",
+                      "description": "(Required) Kalshi market ticker or Polymarket `condition_id`."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"FORBIDDEN\",\n    \"message\": \"string\",\n    \"details\": {},\n    \"retry_after\": 8584\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6cf4749e-f02a-464c-a33d-3307df174891",
+              "name": "Resource not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "markets",
+                    ":ticker"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "venue",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "ticker",
+                      "description": "(Required) Kalshi market ticker or Polymarket `condition_id`."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: apikey",
+                      "type": "text/plain"
+                    },
+                    "key": "X-API-Key",
+                    "value": "<API Key>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Resource not found\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.totalis.trade",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}"
+      },
+      {
+        "key": "in",
+        "value": "header"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "54405a9f-6361-4df1-9098-a37df78ddef9",
+    "name": "Totalis RFQ API Keys Markets API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.\n\n**Wire format**: snake_case JSON. All successful responses are wrapped in `{ \"data\": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ \"error\": { code, message, details? } }` envelope.\n\n**Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.\n\n**Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.\n\n**Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.",
+      "type": "text/plain"
+    }
+  }
+}

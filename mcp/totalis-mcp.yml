@@ -2,11 +2,9 @@ generated: '2026-07-21'
 method: derived
 source: openapi/totalis-openapi-original.json
 status: candidate
-note: >-
-  No official Totalis MCP server was found (checked the official MCP registry —
-  registry.modelcontextprotocol.io returned zero matches — plus npm and the
-  docs). This is a candidate tool list derived from the published OpenAPI
-  operations of the Totalis RFQ API.
+note: No official Totalis MCP server was found (checked the official MCP registry — registry.modelcontextprotocol.io
+  returned zero matches — plus npm and the docs). This is a candidate tool list derived from the published
+  OpenAPI operations of the Totalis RFQ API.
 server:
   name: totalis
   transport: http
@@ -86,3 +84,9 @@ tools:
 - name: redeliver_webhook_delivery
   description: Re-queue a delivered or dead-lettered webhook delivery
   source_operation: openapi/totalis-openapi-original.json#redeliverWebhookDelivery
+deployment:
+  mode: none
+  verified: derived
+  tools: 25
+  checked: '2026-08-12'
+  source: catalog MCP census

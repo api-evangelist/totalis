@@ -1,0 +1,155 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Totalis RFQ API Keys Webhooks API",
+    "version": "2.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-API-Key",
+      "value": "{{X-API-Key}}",
+      "placement": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Webhooks",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get webhook config",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/webhooks",
+            "params": [
+              {
+                "name": "owner_kind",
+                "value": "",
+                "type": "query",
+                "description": "Which endpoint to address: `user` (default) or `mm` (market-maker)."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns the current webhook endpoint config (or nulls if never configured) plus the subscribable event catalog. The signing secret is never returned — only whether one is set."
+        },
+        {
+          "info": {
+            "name": "Set webhook config",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.totalis.trade/v1/webhooks",
+            "params": [
+              {
+                "name": "owner_kind",
+                "value": "",
+                "type": "query",
+                "description": "Which endpoint to address: `user` (default) or `mm` (market-maker)."
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Replace the endpoint URL and subscribed events. Preserves the signing secret. A fresh endpoint is undeliverable until a secret is set (see rotate-secret)."
+        },
+        {
+          "info": {
+            "name": "Rotate signing secret",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.totalis.trade/v1/webhooks/rotate-secret",
+            "params": [
+              {
+                "name": "owner_kind",
+                "value": "",
+                "type": "query",
+                "description": "Which endpoint to address: `user` (default) or `mm` (market-maker)."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Mint a fresh HMAC signing secret, returned ONCE (stored encrypted, never retrievable again). Requires an existing endpoint (set a URL first). Deliveries signed with the old secret stop verifying immediately."
+        },
+        {
+          "info": {
+            "name": "List recent deliveries",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/webhooks/deliveries",
+            "params": [
+              {
+                "name": "owner_kind",
+                "value": "",
+                "type": "query",
+                "description": "Which endpoint to address: `user` (default) or `mm` (market-maker)."
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Recent delivery attempts (status/attempt metadata, newest first). Empty if no endpoint is configured."
+        },
+        {
+          "info": {
+            "name": "Replay a delivery",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.totalis.trade/v1/webhooks/deliveries/:id/redeliver",
+            "params": [
+              {
+                "name": "owner_kind",
+                "value": "",
+                "type": "query",
+                "description": "Which endpoint to address: `user` (default) or `mm` (market-maker)."
+              },
+              {
+                "name": "id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Re-queue a settled (delivered or dead_letter) delivery, scoped to your own endpoint. Replays reuse the same X-Totalis-Event-Id."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

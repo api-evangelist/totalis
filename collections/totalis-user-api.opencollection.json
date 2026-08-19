@@ -1,0 +1,210 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Totalis RFQ API Keys User API",
+    "version": "2.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-API-Key",
+      "value": "{{X-API-Key}}",
+      "placement": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "User",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get Profile",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/me",
+            "params": [
+              {
+                "name": "ref",
+                "value": "",
+                "type": "query",
+                "description": "Referral / invite code to auto-redeem on first login."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Get the authenticated user's profile. Auto-creates a user record on first call. Pass `?ref=<invite-code>` on first login to auto-redeem an invite code; when redemption succeeds the response includes `auto_redeemed: true` and, where configured, an `airdrop` outcome."
+        },
+        {
+          "info": {
+            "name": "Update Username",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.totalis.trade/v1/username",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Change the authenticated user's display name. Must be 3–20 characters, alphanumeric and underscores only."
+        },
+        {
+          "info": {
+            "name": "Check Username",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/username/check",
+            "params": [
+              {
+                "name": "username",
+                "value": "",
+                "type": "query",
+                "description": "Candidate username."
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Check whether a username is available. Must match 3–20 chars, alphanumeric + underscores."
+        },
+        {
+          "info": {
+            "name": "Get Wallet",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/wallet",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Get the authenticated user's embedded Solana wallet address, wallet/vault balances, and the aggregated `locked_amount` across active RFQs and vault positions."
+        },
+        {
+          "info": {
+            "name": "Get Blockhash",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/wallet/blockhash",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Latest Solana blockhash for client-side transaction construction. Useful for browser clients that do not have direct RPC access."
+        },
+        {
+          "info": {
+            "name": "Submit Transaction",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.totalis.trade/v1/wallet/submit-tx",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Submit a client-signed serialized Solana transaction. Used for wallet delegation and other user-signed flows from browser clients without direct RPC access. Rate-limited to 10 requests/minute."
+        },
+        {
+          "info": {
+            "name": "Consolidated portfolio (balance, stats, counts, summary)",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/portfolio",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns the user's full portfolio in a single batched query: vault balance,\ntrading stats, RFQ status counts, and active-bet summary. Balance is null\nwhen the user has no vault (never traded).\n"
+        },
+        {
+          "info": {
+            "name": "Check TEE wallet delegation status",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/wallet/delegation-status",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Check TEE wallet delegation status"
+        },
+        {
+          "info": {
+            "name": "Confirm TEE wallet delegation AND drain any pending welcome airdrop",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.totalis.trade/v1/wallet/enable-trading",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Two responsibilities, kept in one round-trip so the frontend can\nrender a single combined success toast:\n\n1. **Delegation status.** Confirms whether the embedded wallet\n   is currently delegated to our key quorum. The actual\n   delegation is a USER-SIDE action (frontend `addSigners()`);\n   this endpoint only reads the current state — it does NOT\n   perform the delegation itself.\n2. **Pending welcome-airdrop drain.** Under the deferred-airdrop\n   flow (TT-airdrop-bug 2026-05-13), the welcome aird"
+        },
+        {
+          "info": {
+            "name": "Withdraw USDC from the embedded wallet to an external address",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.totalis.trade/v1/wallet/withdraw",
+            "headers": [
+              {
+                "name": "Idempotency-Key",
+                "value": ""
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Sends USDC out of the caller's embedded wallet ATA to an arbitrary\non-curve Solana address. Uses Privy's session-signer delegation\n(set up via /v1/wallet/enable-trading) and Privy's native gas\nsponsorship — the user is not prompted to sign and never needs SOL.\n\nChained vault-tap: when the requested `amount_usdc` exceeds the\ncaller's ATA-available balance, the handler first issues\n`withdraw_from_vault` (vault PDA → owner ATA) for the shortfall,\nwaits for that TX to confirm, then issues the extern"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

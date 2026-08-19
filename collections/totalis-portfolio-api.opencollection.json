@@ -1,0 +1,48 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Totalis RFQ API Keys Portfolio API",
+    "version": "2.1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-API-Key",
+      "value": "{{X-API-Key}}",
+      "placement": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Portfolio",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "P&L timeseries",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.totalis.trade/v1/pnl",
+            "params": [
+              {
+                "name": "period",
+                "value": "",
+                "type": "query"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Realized P&L per day over the requested window (`1D` / `1W` / `1M` / `ALL`; default `1W`). Stats totals (wins / losses / realized P&L) are on `GET /v1/portfolio`."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
