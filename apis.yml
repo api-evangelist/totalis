@@ -108,18 +108,6 @@ apis:
     url: openapi/totalis-portfolio-api-openapi.yml
   - type: Documentation
     url: https://docs.totalis.trade/api-reference/introduction
-- aid: totalis:totalis-rfqs-api
-  name: Totalis RFQs API
-  description: The RFQs API from Totalis — 2 operation(s) for rfqs.
-  humanURL: https://docs.totalis.trade/api-reference/introduction
-  baseURL: https://api.totalis.trade
-  tags:
-  - RFQs
-  properties:
-  - type: OpenAPI
-    url: openapi/totalis-rfqs-api-openapi.yml
-  - type: Documentation
-    url: https://docs.totalis.trade/api-reference/introduction
 - aid: totalis:totalis-user-api
   name: Totalis User API
   description: User profile, wallet, and devnet helpers.
@@ -156,6 +144,18 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/totalis-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.totalis.trade/api-reference/introduction
+- aid: totalis:totalis-rf-qs-api
+  name: Totalis RF Qs API
+  description: The RF Qs API from Totalis — 2 operation(s) for rf qs.
+  humanURL: https://docs.totalis.trade/api-reference/introduction
+  baseURL: https://api.totalis.trade
+  tags:
+  - RF Qs
+  properties:
+  - type: OpenAPI
+    url: openapi/totalis-rf-qs-api-openapi.yml
   - type: Documentation
     url: https://docs.totalis.trade/api-reference/introduction
 maintainers:
