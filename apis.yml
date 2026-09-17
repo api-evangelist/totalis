@@ -146,16 +146,16 @@ apis:
     url: openapi/totalis-webhooks-api-openapi.yml
   - type: Documentation
     url: https://docs.totalis.trade/api-reference/introduction
-- aid: totalis:totalis-rf-qs-api
+- aid: totalis:totalis-rfqs-api
   name: Totalis RF Qs API
-  description: The RF Qs API from Totalis — 2 operation(s) for rf qs.
+  description: The RFQs API from Totalis — 2 operation(s) for rfqs.
   humanURL: https://docs.totalis.trade/api-reference/introduction
   baseURL: https://api.totalis.trade
   tags:
-  - RF Qs
+  - RFQs
   properties:
   - type: OpenAPI
-    url: openapi/totalis-rf-qs-api-openapi.yml
+    url: openapi/totalis-rfqs-api-openapi.yml
   - type: Documentation
     url: https://docs.totalis.trade/api-reference/introduction
 maintainers:
