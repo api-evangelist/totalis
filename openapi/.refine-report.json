@@ -1,13 +1,7 @@
 {
   "provider": "totalis",
   "sources": [
-    "totalis-api-keys-api-openapi.yml",
-    "totalis-markets-api-openapi.yml",
-    "totalis-portfolio-api-openapi.yml",
-    "totalis-rfqs-api-openapi.yml",
-    "totalis-user-api-openapi.yml",
-    "totalis-vault-api-openapi.yml",
-    "totalis-webhooks-api-openapi.yml"
+    "_original/totalis-openapi-original.json"
   ],
   "outputs": [
     "totalis-api-keys-api-openapi.yml",
@@ -18,9 +12,28 @@
     "totalis-vault-api-openapi.yml",
     "totalis-webhooks-api-openapi.yml"
   ],
-  "archived": [],
+  "archived": [
+    "deleted 1 superseded output(s) from the previous generation"
+  ],
   "errors": [],
   "warnings": [],
-  "notes": [],
-  "skipped": []
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "totalis-openapi-original.json: upgraded openapi 3.0.3 -> OpenAPI 3.2.0",
+    "totalis-openapi-original.json: declared missing tag: Portfolio",
+    "totalis-openapi-original.json: declared missing tag: RFQs",
+    "totalis-openapi-original.json: declared missing tag: Vault",
+    "totalis-openapi-original.json: declared missing tag: Webhooks",
+    "superseded outputs removed: totalis-rf-qs-api-openapi.yml",
+    "apis.yml register: written (+1 apis, 7 total)"
+  ],
+  "skipped": [
+    "totalis-api-keys-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "totalis-markets-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "totalis-portfolio-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "totalis-rf-qs-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "totalis-user-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "totalis-vault-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "totalis-webhooks-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }

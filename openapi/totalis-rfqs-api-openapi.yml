@@ -1,20 +1,8 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Totalis RFQ API Keys RFQs API
+  title: Totalis RFQ RF Qs API
   version: 2.1.0
-  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
-
-
-    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
-
-
-    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
-
-
-    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
-
-
-    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+  description: Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
 servers:
 - url: https://api.totalis.trade
   description: Production
@@ -104,98 +92,117 @@ paths:
           $ref: '#/components/responses/NotFound'
 components:
   schemas:
-    Venue:
-      type: string
-      enum:
-      - kalshi
-      - polymarket
-      description: Source venue for a market.
-    PositionStatus:
-      type: string
-      description: Vault position lifecycle. `pending`/`processing` are intermediate states before on-chain creation; `settling`/`cancelling` are intermediate states for settlement/cancellation; `settled_win`/`settled_loss`/`cancelled` are terminal; the `*_mm_release` and `expired` states cover the permissionless-expiry path; the buyback path is `active → bought_back_pending_db → bought_back` (with `reconciling_bought_back_db` as the short-lived reconciler sentinel); `error` means retries are exhausted and manual intervention is required.
-      enum:
-      - pending
-      - processing
-      - active
-      - settling
-      - cancelling
-      - settled_win
-      - settled_loss
-      - cancelled
-      - reconciling_mm_release
-      - expired_pending_mm_release
-      - expired
-      - reconciling_bought_back_db
-      - bought_back_pending_db
-      - bought_back
-      - error
-    PaginationMeta:
+    Rfq:
       type: object
       properties:
-        cursor:
+        id:
           type: string
-          nullable: true
-        has_more:
-          type: boolean
-        limit:
-          type: integer
-          description: Maximum number of items requested for this page.
-        offset:
-          type: integer
-          description: Number of items skipped before this page.
-        total:
-          type: integer
-          description: Total number of items available across all pages, when returned by the endpoint.
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
-    LegOutcome:
-      type: string
-      enum:
-      - win
-      - loss
-      - push
-      - pending
-    WinnerSide:
-      type: string
-      enum:
-      - user
-      - mm
-      description: Winner of a settled parlay position.
-    Cashout:
-      type: object
-      description: 'Early-cashout (buyback) summary attached to a bought_back RFQ — the
-
-        buyback analogue of Settlement. realized_pnl is the user''s net P&L
-
-        (stake nets out; the directional `amount` is the realized delta, less
-
-        the profit fee on the profiting side and the create-time taker fee).
-
-        '
-      required:
-      - realized_pnl
-      - amount
-      - mm_pays_user
-      properties:
-        realized_pnl:
+          format: uuid
+        user_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/RfqStatus'
+        bet_amount:
           type: number
-          description: User's realized P&L from the early cashout (USDC, signed).
-        amount:
+        implied_probability:
           type: number
-          description: Directional buyback transfer (USDC, >= 0).
-        mm_pays_user:
+        legs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Leg'
+        quotes:
+          type:
+          - array
+          - 'null'
+          items:
+            $ref: '#/components/schemas/Quote'
+          description: null = not requested (fetched without include=quotes). [] = requested but no quotes yet.
+        accepted_quote_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Set once status >= accepted
+        market_maker_id:
+          type:
+          - string
+          - 'null'
+          description: Set once status >= accepted
+        position_pda:
+          type:
+          - string
+          - 'null'
+          description: On-chain position address. Set once status >= confirmed.
+        position_id:
+          type:
+          - string
+          - 'null'
+          description: 'On-chain position id — the 16-byte vault_positions.position_id, hex-encoded (32 chars). Distinct from position_pda (a base58 address): this is the id the early-cashout endpoints key on (/internal/positions/cashout-eligibility, POST /v1/cashout-requests). Set once status >= confirmed.'
+        position_status:
+          description: Position status from vault_positions table
+          allOf:
+          - $ref: '#/components/schemas/PositionStatus'
+        position_error:
+          type:
+          - string
+          - 'null'
+          description: Last error recorded on the vault position. Populated when position_status === 'error'; null otherwise.
+        cancellation_reason:
+          type:
+          - string
+          - 'null'
+          description: Why the ticket was cancelled.
+        is_failed:
           type: boolean
-          description: True when the MM paid the user (user was up on the position).
-        cashed_out_at:
+          description: True when the vault position errored (on-chain execution failed). Derived from position_status === 'error'. Omitted (not false) for non-failed parlays.
+        fee_amount:
+          type:
+          - number
+          - 'null'
+          description: Set on settled RFQs only
+        settlement:
+          description: Set on settled RFQs only
+          allOf:
+          - $ref: '#/components/schemas/Settlement'
+        settled_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Set on settled RFQs only
+        cashout:
+          description: Set on bought_back (early-cashout) RFQs only — realized buyback P&L.
+          allOf:
+          - $ref: '#/components/schemas/Cashout'
+        create_position_tx:
+          type:
+          - string
+          - 'null'
+          description: create_position transaction signature. Set once the on-chain vault position is created (status >= confirmed).
+        settle_tx:
+          type:
+          - string
+          - 'null'
+          description: settle_position transaction signature — the on-chain proof a settled RFQ paid out. Set on settled RFQs (the settle analogue of buyback_tx).
+        cancel_tx:
+          type:
+          - string
+          - 'null'
+          description: cancel_position transaction signature. Set on cancelled RFQs.
+        buyback_tx:
+          type:
+          - string
+          - 'null'
+          description: Buyback (early-cashout) transaction signature, surfaced at the RFQ root by the serializer. Set on bought_back RFQs — the on-chain proof of the cashout, the buyback analogue of settle_tx.
+        created_at:
           type: string
           format: date-time
-          nullable: true
-          description: Time the position was bought back / cashed out (the buyback fee insert = finalize moment). The buyback analogue of settled_at; clients sort the History cashed-out row by this. Absent on legacy rows without a fee.
+        updated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
     RfqStatus:
       type: string
       enum:
@@ -208,57 +215,43 @@ components:
       - expired
       - settled
       - bought_back
-    Leg:
+    Side:
+      type: string
+      enum:
+      - 'yes'
+      - 'no'
+      description: Bet side.
+    LegOutcome:
+      type: string
+      enum:
+      - win
+      - loss
+      - push
+      - pending
+    PaginationMeta:
       type: object
       properties:
-        leg_index:
+        cursor:
+          type:
+          - string
+          - 'null'
+        has_more:
+          type: boolean
+        limit:
           type: integer
-          description: Zero-based ordering index for the leg within the RFQ
-        market_ticker:
-          type: string
-        event_ticker:
-          type: string
-        side:
-          $ref: '#/components/schemas/Side'
-        venue:
-          $ref: '#/components/schemas/Venue'
-        market_title:
-          type: string
-        event_title:
-          type: string
-        yes_sub_title:
-          type: string
-          nullable: true
-          description: Snapshot of `Market.yes_sub_title` at RFQ creation (e.g. team name on a sports market). Lets clients render the side-specific subtitle after the underlying market has rolled out of the live `/markets` cache. Null on binary markets that carry no per-side subtitle and on legs created before this field was persisted.
-        no_sub_title:
-          type: string
-          nullable: true
-          description: Snapshot of `Market.no_sub_title` at RFQ creation — opposing-side counterpart to `yes_sub_title`. Same null semantics.
-        venue_url:
-          type: string
-          nullable: true
-          description: Canonical URL of the leg's market on its source venue (Kalshi or Polymarket). Hydrated from marketd Redis hashes, falling back to the parlay-leg snapshot when the market hash has been purged.
-        image_url:
-          type: string
-          nullable: true
-          description: Image URL for the leg's market. Hydrated from the marketd Redis hash and whitelist metadata, falling back to the parlay-leg snapshot when the market hash has been purged.
-        expected_expiration_time:
-          type: string
-          format: date-time
-          nullable: true
-          description: Expected market resolution time for the leg. Hydrated from marketd Redis hashes, falling back to the parlay-leg snapshot when the market hash has been purged.
-        current_yes_price:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Yes ask price at RFQ creation time, decimal probability (0-1)
-        current_no_price:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: No ask price at RFQ creation time, decimal probability (0-1)
-        outcome:
-          $ref: '#/components/schemas/LegOutcome'
+          description: Maximum number of items requested for this page.
+        offset:
+          type: integer
+          description: Number of items skipped before this page.
+        total:
+          type: integer
+          description: Total number of items available across all pages, when returned by the endpoint.
+    Venue:
+      type: string
+      enum:
+      - kalshi
+      - polymarket
+      description: Source venue for a market.
     Settlement:
       type: object
       required:
@@ -313,107 +306,31 @@ components:
         settled_at:
           type: string
           format: date-time
-    Rfq:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-        status:
-          $ref: '#/components/schemas/RfqStatus'
-        bet_amount:
-          type: number
-        implied_probability:
-          type: number
-        legs:
-          type: array
-          items:
-            $ref: '#/components/schemas/Leg'
-        quotes:
-          type: array
-          nullable: true
-          items:
-            $ref: '#/components/schemas/Quote'
-          description: null = not requested (fetched without include=quotes). [] = requested but no quotes yet.
-        accepted_quote_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: Set once status >= accepted
-        market_maker_id:
-          type: string
-          nullable: true
-          description: Set once status >= accepted
-        position_pda:
-          type: string
-          nullable: true
-          description: On-chain position address. Set once status >= confirmed.
-        position_id:
-          type: string
-          nullable: true
-          description: 'On-chain position id — the 16-byte vault_positions.position_id, hex-encoded (32 chars). Distinct from position_pda (a base58 address): this is the id the early-cashout endpoints key on (/internal/positions/cashout-eligibility, POST /v1/cashout-requests). Set once status >= confirmed.'
-        position_status:
-          nullable: true
-          description: Position status from vault_positions table
-          allOf:
-          - $ref: '#/components/schemas/PositionStatus'
-        position_error:
-          type: string
-          nullable: true
-          description: Last error recorded on the vault position. Populated when position_status === 'error'; null otherwise.
-        cancellation_reason:
-          type: string
-          nullable: true
-          description: Why the ticket was cancelled.
-        is_failed:
-          type: boolean
-          description: True when the vault position errored (on-chain execution failed). Derived from position_status === 'error'. Omitted (not false) for non-failed parlays.
-        fee_amount:
-          type: number
-          nullable: true
-          description: Set on settled RFQs only
-        settlement:
-          nullable: true
-          description: Set on settled RFQs only
-          allOf:
-          - $ref: '#/components/schemas/Settlement'
-        settled_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Set on settled RFQs only
-        cashout:
-          nullable: true
-          description: Set on bought_back (early-cashout) RFQs only — realized buyback P&L.
-          allOf:
-          - $ref: '#/components/schemas/Cashout'
-        create_position_tx:
-          type: string
-          nullable: true
-          description: create_position transaction signature. Set once the on-chain vault position is created (status >= confirmed).
-        settle_tx:
-          type: string
-          nullable: true
-          description: settle_position transaction signature — the on-chain proof a settled RFQ paid out. Set on settled RFQs (the settle analogue of buyback_tx).
-        cancel_tx:
-          type: string
-          nullable: true
-          description: cancel_position transaction signature. Set on cancelled RFQs.
-        buyback_tx:
-          type: string
-          nullable: true
-          description: Buyback (early-cashout) transaction signature, surfaced at the RFQ root by the serializer. Set on bought_back RFQs — the on-chain proof of the cashout, the buyback analogue of settle_tx.
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
+    WinnerSide:
+      type: string
+      enum:
+      - user
+      - mm
+      description: Winner of a settled parlay position.
+    PositionStatus:
+      type: string
+      description: Vault position lifecycle. `pending`/`processing` are intermediate states before on-chain creation; `settling`/`cancelling` are intermediate states for settlement/cancellation; `settled_win`/`settled_loss`/`cancelled` are terminal; the `*_mm_release` and `expired` states cover the permissionless-expiry path; the buyback path is `active → bought_back_pending_db → bought_back` (with `reconciling_bought_back_db` as the short-lived reconciler sentinel); `error` means retries are exhausted and manual intervention is required.
+      enum:
+      - pending
+      - processing
+      - active
+      - settling
+      - cancelling
+      - settled_win
+      - settled_loss
+      - cancelled
+      - reconciling_mm_release
+      - expired_pending_mm_release
+      - expired
+      - reconciling_bought_back_db
+      - bought_back_pending_db
+      - bought_back
+      - error
     Quote:
       type: object
       properties:
@@ -463,6 +380,13 @@ components:
         updated_at:
           type: string
           format: date-time
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
     QuoteStatus:
       type: string
       enum:
@@ -474,12 +398,37 @@ components:
       - expired
       - withdrawn
       description: Lifecycle status of a quote.
-    Side:
-      type: string
-      enum:
-      - 'yes'
-      - 'no'
-      description: Bet side.
+    Cashout:
+      type: object
+      description: 'Early-cashout (buyback) summary attached to a bought_back RFQ — the
+
+        buyback analogue of Settlement. realized_pnl is the user''s net P&L
+
+        (stake nets out; the directional `amount` is the realized delta, less
+
+        the profit fee on the profiting side and the create-time taker fee).
+
+        '
+      required:
+      - realized_pnl
+      - amount
+      - mm_pays_user
+      properties:
+        realized_pnl:
+          type: number
+          description: User's realized P&L from the early cashout (USDC, signed).
+        amount:
+          type: number
+          description: Directional buyback transfer (USDC, >= 0).
+        mm_pays_user:
+          type: boolean
+          description: True when the MM paid the user (user was up on the position).
+        cashed_out_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Time the position was bought back / cashed out (the buyback fee insert = finalize moment). The buyback analogue of settled_at; clients sort the History cashed-out row by this. Absent on legacy rows without a fee.
     ErrorBody:
       type: object
       required:
@@ -506,9 +455,82 @@ components:
           type: object
           description: Additional error context.
         retry_after:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Seconds until retry; set on 429 responses.
+    Leg:
+      type: object
+      properties:
+        leg_index:
+          type: integer
+          description: Zero-based ordering index for the leg within the RFQ
+        market_ticker:
+          type: string
+        event_ticker:
+          type: string
+        side:
+          $ref: '#/components/schemas/Side'
+        venue:
+          $ref: '#/components/schemas/Venue'
+        market_title:
+          type: string
+        event_title:
+          type: string
+        yes_sub_title:
+          type:
+          - string
+          - 'null'
+          description: Snapshot of `Market.yes_sub_title` at RFQ creation (e.g. team name on a sports market). Lets clients render the side-specific subtitle after the underlying market has rolled out of the live `/markets` cache. Null on binary markets that carry no per-side subtitle and on legs created before this field was persisted.
+        no_sub_title:
+          type:
+          - string
+          - 'null'
+          description: Snapshot of `Market.no_sub_title` at RFQ creation — opposing-side counterpart to `yes_sub_title`. Same null semantics.
+        venue_url:
+          type:
+          - string
+          - 'null'
+          description: Canonical URL of the leg's market on its source venue (Kalshi or Polymarket). Hydrated from marketd Redis hashes, falling back to the parlay-leg snapshot when the market hash has been purged.
+        image_url:
+          type:
+          - string
+          - 'null'
+          description: Image URL for the leg's market. Hydrated from the marketd Redis hash and whitelist metadata, falling back to the parlay-leg snapshot when the market hash has been purged.
+        expected_expiration_time:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Expected market resolution time for the leg. Hydrated from marketd Redis hashes, falling back to the parlay-leg snapshot when the market hash has been purged.
+        current_yes_price:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Yes ask price at RFQ creation time, decimal probability (0-1)
+        current_no_price:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: No ask price at RFQ creation time, decimal probability (0-1)
+        outcome:
+          $ref: '#/components/schemas/LegOutcome'
+  parameters:
+    LimitParam:
+      name: limit
+      in: query
+      description: Page size.
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+    CursorParam:
+      name: cursor
+      in: query
+      description: Opaque pagination cursor from a previous response's `meta.cursor`. Do not construct manually.
+      schema:
+        type: string
   responses:
     NotFound:
       description: Resource not found
@@ -520,22 +542,6 @@ components:
             error:
               code: NOT_FOUND
               message: Resource not found
-  parameters:
-    CursorParam:
-      name: cursor
-      in: query
-      description: Opaque pagination cursor from a previous response's `meta.cursor`. Do not construct manually.
-      schema:
-        type: string
-    LimitParam:
-      name: limit
-      in: query
-      description: Page size.
-      schema:
-        type: integer
-        default: 20
-        minimum: 1
-        maximum: 100
   securitySchemes:
     PrivyJWT:
       type: http

@@ -1,20 +1,8 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Totalis RFQ API Keys Markets API
+  title: Totalis RFQ Markets API
   version: 2.1.0
-  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
-
-
-    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
-
-
-    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
-
-
-    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
-
-
-    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+  description: Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
 servers:
 - url: https://api.totalis.trade
   description: Production
@@ -290,6 +278,131 @@ paths:
           $ref: '#/components/responses/NotFound'
 components:
   schemas:
+    EventGroup:
+      type: object
+      required:
+      - event_ticker
+      - series_ticker
+      - category
+      - total_markets
+      - markets
+      properties:
+        event_ticker:
+          type: string
+          description: 'Event identifier. **Kalshi**: event ticker (e.g. `KXBTC-25FEB07`). **Polymarket**: Gamma `event_slug` (falls back to `market_slug` when no parent event exists).'
+        series_ticker:
+          type: string
+          description: 'Series identifier. **Kalshi**: series ticker (e.g. `KXBTC`). **Polymarket**: Gamma `market_slug`.'
+        series_title:
+          type:
+          - string
+          - 'null'
+        event_title:
+          type:
+          - string
+          - 'null'
+        event_sub_title:
+          type:
+          - string
+          - 'null'
+        category:
+          type: string
+        image_url:
+          type:
+          - string
+          - 'null'
+        total_markets:
+          type: integer
+        markets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Market'
+    Market:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: 'Unique market identifier on its venue. **Kalshi**: market ticker (e.g. `KXBTC-25FEB07-T100000`). **Polymarket**: `condition_id`, the 0x-prefixed hex string from Polymarket''s CTF (e.g. `0x4d2…`); not the gamma id, question id, or market slug. Yes/no CLOB token ids are not returned by this API.'
+        event_ticker:
+          type: string
+          description: 'Event identifier the market belongs to. **Kalshi**: event ticker (e.g. `KXBTC-25FEB07`). **Polymarket**: Gamma `event_slug` (falls back to `market_slug` when no parent event exists).'
+        series_ticker:
+          type: string
+          description: 'Series identifier the event belongs to. **Kalshi**: series ticker (e.g. `KXBTC`). **Polymarket**: Gamma `market_slug` — Polymarket has no native series concept, so we key whitelisting on the market slug.'
+        title:
+          type: string
+        subtitle:
+          type:
+          - string
+          - 'null'
+        yes_sub_title:
+          type:
+          - string
+          - 'null'
+        no_sub_title:
+          type:
+          - string
+          - 'null'
+        bet_group:
+          type:
+          - string
+          - 'null'
+          description: 'Polymarket-only: section label for the row (e.g. "Match O/U 21.5"). Always null on Kalshi rows.'
+        category:
+          type: string
+        subcategory:
+          type:
+          - string
+          - 'null'
+        frequency:
+          type:
+          - string
+          - 'null'
+          description: 'Cadence of the underlying series: daily/weekly/monthly/hourly/other. Null for categories without timeframe pills.'
+        venue:
+          $ref: '#/components/schemas/Venue'
+        status:
+          type: string
+        yes_bid:
+          type: number
+        yes_ask:
+          type: number
+        no_bid:
+          type: number
+        no_ask:
+          type: number
+        last_price:
+          type: number
+        price_to_beat:
+          type:
+          - number
+          - 'null'
+          description: Reference price for Polymarket up/down markets. Null on Kalshi and on non-up/down Polymarket markets.
+        volume:
+          type: integer
+        volume_24h:
+          type: integer
+        open_interest:
+          type: integer
+        venue_url:
+          type:
+          - string
+          - 'null'
+          description: Canonical market URL on its source venue.
+        open_time:
+          type: string
+          format: date-time
+        close_time:
+          type: string
+          format: date-time
+        expiration_time:
+          type: string
+          format: date-time
+        exclusion_keys:
+          type: array
+          items:
+            type: string
+          description: Parlay-correlation keys. Two markets **cannot co-exist in the same parlay if (and only if) their `exclusion_keys` arrays intersect** — i.e. share at least one string. Apply a pure set-intersection; there is no rule table to maintain client-side. The keys encode every correlation rule (cross-series exclusion groups, threshold ladders, same-game sports family/kind/participant correlation, Polymarket sub-events). Keys are opaque and namespaced by reason and scope (e.g. `kp:<gameKey>:moneyline|spread`, `grp:<idx>:<eventKey>`, `fam:<gameKey>:<series>`), and are derived solely from the market itself, so a selected leg can snapshot its keys and compare them later. The plain one-leg-per-event rule (same `event_ticker`) is intentionally not encoded here. Always present; an empty array means the market participates in no correlation rule.
     Venue:
       type: string
       enum:
@@ -300,8 +413,9 @@ components:
       type: object
       properties:
         cursor:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
         has_more:
           type: boolean
         limit:
@@ -313,6 +427,13 @@ components:
         total:
           type: integer
           description: Total number of items available across all pages, when returned by the endpoint.
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
     SubcategorySlug:
       type: string
       description: Subcategory wire format (lowercase snake_case). Valid values depend on the selected `category` and are enforced server-side.
@@ -348,126 +469,6 @@ components:
       - ai
       - companies
       - other
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
-    EventGroup:
-      type: object
-      required:
-      - event_ticker
-      - series_ticker
-      - category
-      - total_markets
-      - markets
-      properties:
-        event_ticker:
-          type: string
-          description: 'Event identifier. **Kalshi**: event ticker (e.g. `KXBTC-25FEB07`). **Polymarket**: Gamma `event_slug` (falls back to `market_slug` when no parent event exists).'
-        series_ticker:
-          type: string
-          description: 'Series identifier. **Kalshi**: series ticker (e.g. `KXBTC`). **Polymarket**: Gamma `market_slug`.'
-        series_title:
-          type: string
-          nullable: true
-        event_title:
-          type: string
-          nullable: true
-        event_sub_title:
-          type: string
-          nullable: true
-        category:
-          type: string
-        image_url:
-          type: string
-          nullable: true
-        total_markets:
-          type: integer
-        markets:
-          type: array
-          items:
-            $ref: '#/components/schemas/Market'
-    Market:
-      type: object
-      properties:
-        ticker:
-          type: string
-          description: 'Unique market identifier on its venue. **Kalshi**: market ticker (e.g. `KXBTC-25FEB07-T100000`). **Polymarket**: `condition_id`, the 0x-prefixed hex string from Polymarket''s CTF (e.g. `0x4d2…`); not the gamma id, question id, or market slug. Yes/no CLOB token ids are not returned by this API.'
-        event_ticker:
-          type: string
-          description: 'Event identifier the market belongs to. **Kalshi**: event ticker (e.g. `KXBTC-25FEB07`). **Polymarket**: Gamma `event_slug` (falls back to `market_slug` when no parent event exists).'
-        series_ticker:
-          type: string
-          description: 'Series identifier the event belongs to. **Kalshi**: series ticker (e.g. `KXBTC`). **Polymarket**: Gamma `market_slug` — Polymarket has no native series concept, so we key whitelisting on the market slug.'
-        title:
-          type: string
-        subtitle:
-          type: string
-          nullable: true
-        yes_sub_title:
-          type: string
-          nullable: true
-        no_sub_title:
-          type: string
-          nullable: true
-        bet_group:
-          type: string
-          nullable: true
-          description: 'Polymarket-only: section label for the row (e.g. "Match O/U 21.5"). Always null on Kalshi rows.'
-        category:
-          type: string
-        subcategory:
-          type: string
-          nullable: true
-        frequency:
-          type: string
-          nullable: true
-          description: 'Cadence of the underlying series: daily/weekly/monthly/hourly/other. Null for categories without timeframe pills.'
-        venue:
-          $ref: '#/components/schemas/Venue'
-        status:
-          type: string
-        yes_bid:
-          type: number
-        yes_ask:
-          type: number
-        no_bid:
-          type: number
-        no_ask:
-          type: number
-        last_price:
-          type: number
-        price_to_beat:
-          type: number
-          nullable: true
-          description: Reference price for Polymarket up/down markets. Null on Kalshi and on non-up/down Polymarket markets.
-        volume:
-          type: integer
-        volume_24h:
-          type: integer
-        open_interest:
-          type: integer
-        venue_url:
-          type: string
-          nullable: true
-          description: Canonical market URL on its source venue.
-        open_time:
-          type: string
-          format: date-time
-        close_time:
-          type: string
-          format: date-time
-        expiration_time:
-          type: string
-          format: date-time
-        exclusion_keys:
-          type: array
-          items:
-            type: string
-          description: Parlay-correlation keys. Two markets **cannot co-exist in the same parlay if (and only if) their `exclusion_keys` arrays intersect** — i.e. share at least one string. Apply a pure set-intersection; there is no rule table to maintain client-side. The keys encode every correlation rule (cross-series exclusion groups, threshold ladders, same-game sports family/kind/participant correlation, Polymarket sub-events). Keys are opaque and namespaced by reason and scope (e.g. `kp:<gameKey>:moneyline|spread`, `grp:<idx>:<eventKey>`, `fam:<gameKey>:<series>`), and are derived solely from the market itself, so a selected leg can snapshot its keys and compare them later. The plain one-leg-per-event rule (same `event_ticker`) is intentionally not encoded here. Always present; an empty array means the market participates in no correlation rule.
     ErrorBody:
       type: object
       required:
@@ -494,12 +495,13 @@ components:
           type: object
           description: Additional error context.
         retry_after:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Seconds until retry; set on 429 responses.
   responses:
-    InternalError:
-      description: Internal server error
+    BadRequest:
+      description: Validation error
       content:
         application/json:
           schema:
@@ -514,8 +516,8 @@ components:
             error:
               code: NOT_FOUND
               message: Resource not found
-    BadRequest:
-      description: Validation error
+    InternalError:
+      description: Internal server error
       content:
         application/json:
           schema:

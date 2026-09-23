@@ -1,20 +1,8 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
   title: Totalis RFQ API Keys API
   version: 2.1.0
-  description: 'Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
-
-
-    **Wire format**: snake_case JSON. All successful responses are wrapped in `{ "data": ... }`; list endpoints add `meta` with cursor-based pagination. Errors use a `{ "error": { code, message, details? } }` envelope.
-
-
-    **Authentication**: programmatic clients send `X-API-Key`; the web dashboard uses Privy JWTs (`Authorization: Bearer ...`). Any authenticated user can both place parlays and quote as a market maker — there is no separate MM role. Admin endpoints are out of scope for this public reference.
-
-
-    **Rate limiting**: 100 req/min anonymous, 300 req/min authenticated. Responses include `X-RateLimit-*` headers. Request body limit: 256KB.
-
-
-    **Pagination**: list endpoints use opaque cursor pagination. Pass `meta.cursor` from the previous response as `?cursor=...` to fetch the next page; do not parse or construct cursors client-side.'
+  description: Public REST surface for the Totalis parlay RFQ platform — a decentralized request-for-quote marketplace for parlay bets across Kalshi and Polymarket, with on-chain Solana vault settlement.
 servers:
 - url: https://api.totalis.trade
   description: Production
@@ -109,31 +97,6 @@ paths:
           $ref: '#/components/responses/NotFound'
 components:
   schemas:
-    ApiKeySummary:
-      type: object
-      properties:
-        key_prefix:
-          type: string
-        name:
-          type: string
-        status:
-          type: string
-          enum:
-          - active
-          - revoked
-          - expired
-        created_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
-        last_used_at:
-          type: string
-          format: date-time
-          nullable: true
-        request_count:
-          type: integer
     ErrorEnvelope:
       type: object
       required:
@@ -158,6 +121,32 @@ components:
         expires_at:
           type: string
           format: date-time
+    ApiKeySummary:
+      type: object
+      properties:
+        key_prefix:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - revoked
+          - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        request_count:
+          type: integer
     ErrorBody:
       type: object
       required:
@@ -184,20 +173,11 @@ components:
           type: object
           description: Additional error context.
         retry_after:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Seconds until retry; set on 429 responses.
   responses:
-    Unauthorized:
-      description: Missing or invalid authentication
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-          example:
-            error:
-              code: UNAUTHORIZED
-              message: Missing or invalid authentication
     NotFound:
       description: Resource not found
       content:
@@ -208,6 +188,16 @@ components:
             error:
               code: NOT_FOUND
               message: Resource not found
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Missing or invalid authentication
   securitySchemes:
     PrivyJWT:
       type: http
