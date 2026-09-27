@@ -58,6 +58,7 @@ tags:
 - Crypto Web3
 - Market Data
 - Webhook
+- Real-Time
 tags_raw:
 - Company
 - Prediction Markets
@@ -69,6 +70,7 @@ tags_raw:
 - Crypto Web3
 - Market Data
 - Webhooks
+- Real-Time
 apis:
 - aid: totalis:totalis-api-keys-api
   name: Totalis API Keys API

@@ -96,31 +96,28 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Missing or invalid authentication
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
   schemas:
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
-    ApiKeyFull:
-      type: object
-      description: Returned only on creation; the full `key` is visible exactly once.
-      properties:
-        key:
-          type: string
-          description: Full API key (only shown once).
-        key_prefix:
-          type: string
-        name:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
     ApiKeySummary:
       type: object
       properties:
@@ -177,27 +174,30 @@ components:
           - integer
           - 'null'
           description: Seconds until retry; set on 429 responses.
-  responses:
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-          example:
-            error:
-              code: NOT_FOUND
-              message: Resource not found
-    Unauthorized:
-      description: Missing or invalid authentication
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-          example:
-            error:
-              code: UNAUTHORIZED
-              message: Missing or invalid authentication
+    ApiKeyFull:
+      type: object
+      description: Returned only on creation; the full `key` is visible exactly once.
+      properties:
+        key:
+          type: string
+          description: Full API key (only shown once).
+        key_prefix:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
   securitySchemes:
     PrivyJWT:
       type: http

@@ -610,58 +610,6 @@ paths:
                             - submitted_unconfirmed
 components:
   schemas:
-    PortfolioData:
-      type: object
-      description: Consolidated portfolio response from GET /v1/portfolio.
-      properties:
-        balance:
-          description: Null when user has no vault (never traded)
-          allOf:
-          - $ref: '#/components/schemas/PortfolioBalance'
-        stats:
-          $ref: '#/components/schemas/UserStats'
-        counts:
-          $ref: '#/components/schemas/RfqCounts'
-        summary:
-          $ref: '#/components/schemas/PortfolioSummary'
-    DelegationStatus:
-      type: object
-      properties:
-        ready:
-          type: boolean
-          description: True if a wallet is linked and delegation can proceed
-        delegated:
-          type: boolean
-          description: True if TEE wallet delegation is active (server can sign)
-        address:
-          type: string
-          description: Solana wallet address (base58). Empty string if no wallet linked.
-        wallet_id:
-          type: string
-          description: Privy embedded wallet ID (used for delegation API calls)
-    RfqCounts:
-      type: object
-      properties:
-        open:
-          type: integer
-        quoted:
-          type: integer
-        accepted:
-          type: integer
-        confirmed:
-          type: integer
-        executed:
-          type: integer
-          description: Positions on-chain but not yet resolved. Distinct from total_settled — settled means market resolution + payout distributed.
-        total_settled:
-          type: integer
-        total_cancelled:
-          type: integer
-        total_expired:
-          type: integer
-        total_failed:
-          type: integer
-          description: Parlays where the vault position errored on-chain. Derived from vault_positions.status = 'error'.
     AirdropDrainOutcome:
       type: object
       description: 'Outcome of the pending-airdrop drain performed by
@@ -692,35 +640,20 @@ components:
         amount:
           type: number
           description: USDC amount (whole dollars)
-    PortfolioBalance:
+    PortfolioData:
       type: object
-      description: 'Caller''s vault balance (DB-cached, no RPC). Null only when the
-
-        caller has no vault row at all. For dual-role accounts the
-
-        bettor-side vault is preferred and the maker-side row is used
-
-        as a fallback (same rules as `GET /v1/vault`).
-
-        '
+      description: Consolidated portfolio response from GET /v1/portfolio.
       properties:
-        gross_balance:
-          type: number
-        locked_collateral:
-          type: number
-        free_balance:
-          type: number
-        vault_pda:
-          type: string
-        vault_token_account:
-          type: string
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
+        balance:
+          description: Null when user has no vault (never traded)
+          allOf:
+          - $ref: '#/components/schemas/PortfolioBalance'
+        stats:
+          $ref: '#/components/schemas/UserStats'
+        counts:
+          $ref: '#/components/schemas/RfqCounts'
+        summary:
+          $ref: '#/components/schemas/PortfolioSummary'
     AirdropOutcome:
       type: object
       description: 'Welcome airdrop outcome. `success: true` with `pending: true` means the amount was staged and will mint on the user''s next `POST /v1/wallet/enable-trading` call. `success: false` means staging failed.'
@@ -736,25 +669,19 @@ components:
           description: USDC (whole dollars).
         pending:
           type: boolean
-    UserStats:
+    PortfolioSummary:
       type: object
+      description: Derived portfolio-level aggregates from active positions.
       properties:
-        total_parlays:
+        active_count:
           type: integer
-        wins:
-          type: integer
-        losses:
-          type: integer
-        total_wagered:
+          description: Number of active (non-terminal) RFQs
+        active_bet_total:
           type: number
-        realized_pnl:
+          description: Sum of bet_amount across active RFQs
+        portfolio_value:
           type: number
-        updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Null when the user has never settled a trade (no rfq.user_stats row yet).
+          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
     Wallet:
       type: object
       properties:
@@ -776,6 +703,29 @@ components:
         has_traded:
           type: boolean
           description: True once any of the caller's parlays has reached `executed` or `settled`. Informational account state; withdrawals are allowed regardless of this value.
+    RfqCounts:
+      type: object
+      properties:
+        open:
+          type: integer
+        quoted:
+          type: integer
+        accepted:
+          type: integer
+        confirmed:
+          type: integer
+        executed:
+          type: integer
+          description: Positions on-chain but not yet resolved. Distinct from total_settled — settled means market resolution + payout distributed.
+        total_settled:
+          type: integer
+        total_cancelled:
+          type: integer
+        total_expired:
+          type: integer
+        total_failed:
+          type: integer
+          description: Parlays where the vault position errored on-chain. Derived from vault_positions.status = 'error'.
     ErrorBody:
       type: object
       required:
@@ -806,6 +756,62 @@ components:
           - integer
           - 'null'
           description: Seconds until retry; set on 429 responses.
+    PortfolioBalance:
+      type: object
+      description: 'Caller''s vault balance (DB-cached, no RPC). Null only when the
+
+        caller has no vault row at all. For dual-role accounts the
+
+        bettor-side vault is preferred and the maker-side row is used
+
+        as a fallback (same rules as `GET /v1/vault`).
+
+        '
+      properties:
+        gross_balance:
+          type: number
+        locked_collateral:
+          type: number
+        free_balance:
+          type: number
+        vault_pda:
+          type: string
+        vault_token_account:
+          type: string
+    UserStats:
+      type: object
+      properties:
+        total_parlays:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        total_wagered:
+          type: number
+        realized_pnl:
+          type: number
+        updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Null when the user has never settled a trade (no rfq.user_stats row yet).
+    DelegationStatus:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: True if a wallet is linked and delegation can proceed
+        delegated:
+          type: boolean
+          description: True if TEE wallet delegation is active (server can sign)
+        address:
+          type: string
+          description: Solana wallet address (base58). Empty string if no wallet linked.
+        wallet_id:
+          type: string
+          description: Privy embedded wallet ID (used for delegation API calls)
     User:
       type: object
       properties:
@@ -839,44 +845,14 @@ components:
         created_at:
           type: string
           format: date-time
-    PortfolioSummary:
+    ErrorEnvelope:
       type: object
-      description: Derived portfolio-level aggregates from active positions.
+      required:
+      - error
       properties:
-        active_count:
-          type: integer
-          description: Number of active (non-terminal) RFQs
-        active_bet_total:
-          type: number
-          description: Sum of bet_amount across active RFQs
-        portfolio_value:
-          type: number
-          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
+        error:
+          $ref: '#/components/schemas/ErrorBody'
   responses:
-    BadRequest:
-      description: Validation error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-    RateLimited:
-      description: Rate limit exceeded
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-    Conflict:
-      description: Resource conflict (duplicate, already taken, invalid status transition, etc.)
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-    InternalError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
     Unauthorized:
       description: Missing or invalid authentication
       content:
@@ -887,6 +863,30 @@ components:
             error:
               code: UNAUTHORIZED
               message: Missing or invalid authentication
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: Resource conflict (duplicate, already taken, invalid status transition, etc.)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
