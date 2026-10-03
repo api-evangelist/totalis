@@ -278,6 +278,54 @@ paths:
           $ref: '#/components/responses/NotFound'
 components:
   schemas:
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type:
+          - integer
+          - 'null'
+          description: Seconds until retry; set on 429 responses.
+    PaginationMeta:
+      type: object
+      properties:
+        cursor:
+          type:
+          - string
+          - 'null'
+        has_more:
+          type: boolean
+        limit:
+          type: integer
+          description: Maximum number of items requested for this page.
+        offset:
+          type: integer
+          description: Number of items skipped before this page.
+        total:
+          type: integer
+          description: Total number of items available across all pages, when returned by the endpoint.
     EventGroup:
       type: object
       required:
@@ -317,65 +365,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Market'
-    SubcategorySlug:
-      type: string
-      description: Subcategory wire format (lowercase snake_case). Valid values depend on the selected `category` and are enforced server-side.
-      enum:
-      - nba
-      - ncaa
-      - nfl
-      - nhl
-      - mlb
-      - ufc
-      - lol
-      - epl
-      - efl
-      - la_liga
-      - world_cup
-      - bundesliga
-      - liga_portugal
-      - ligue_1
-      - f1
-      - ipl
-      - btc
-      - eth
-      - sol
-      - stocks
-      - indices
-      - etfs
-      - earnings
-      - rates
-      - inflation
-      - commodities
-      - fx
-      - jobs
-      - ai
-      - companies
-      - other
     Venue:
       type: string
       enum:
       - kalshi
       - polymarket
       description: Source venue for a market.
-    PaginationMeta:
-      type: object
-      properties:
-        cursor:
-          type:
-          - string
-          - 'null'
-        has_more:
-          type: boolean
-        limit:
-          type: integer
-          description: Maximum number of items requested for this page.
-        offset:
-          type: integer
-          description: Number of items skipped before this page.
-        total:
-          type: integer
-          description: Total number of items available across all pages, when returned by the endpoint.
     Market:
       type: object
       properties:
@@ -462,36 +457,6 @@ components:
           items:
             type: string
           description: Parlay-correlation keys. Two markets **cannot co-exist in the same parlay if (and only if) their `exclusion_keys` arrays intersect** — i.e. share at least one string. Apply a pure set-intersection; there is no rule table to maintain client-side. The keys encode every correlation rule (cross-series exclusion groups, threshold ladders, same-game sports family/kind/participant correlation, Polymarket sub-events). Keys are opaque and namespaced by reason and scope (e.g. `kp:<gameKey>:moneyline|spread`, `grp:<idx>:<eventKey>`, `fam:<gameKey>:<series>`), and are derived solely from the market itself, so a selected leg can snapshot its keys and compare them later. The plain one-leg-per-event rule (same `event_ticker`) is intentionally not encoded here. Always present; an empty array means the market participates in no correlation rule.
-    ErrorBody:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          enum:
-          - VALIDATION_ERROR
-          - UNAUTHORIZED
-          - FORBIDDEN
-          - NOT_FOUND
-          - CONFLICT
-          - RATE_LIMITED
-          - PAYLOAD_TOO_LARGE
-          - INTERNAL_ERROR
-          - SERVICE_UNAVAILABLE
-          description: Machine-readable error code.
-        message:
-          type: string
-          description: Human-readable error message.
-        details:
-          type: object
-          description: Additional error context.
-        retry_after:
-          type:
-          - integer
-          - 'null'
-          description: Seconds until retry; set on 429 responses.
     ErrorEnvelope:
       type: object
       required:
@@ -499,13 +464,42 @@ components:
       properties:
         error:
           $ref: '#/components/schemas/ErrorBody'
+    SubcategorySlug:
+      type: string
+      description: Subcategory wire format (lowercase snake_case). Valid values depend on the selected `category` and are enforced server-side.
+      enum:
+      - nba
+      - ncaa
+      - nfl
+      - nhl
+      - mlb
+      - ufc
+      - lol
+      - epl
+      - efl
+      - la_liga
+      - world_cup
+      - bundesliga
+      - liga_portugal
+      - ligue_1
+      - f1
+      - ipl
+      - btc
+      - eth
+      - sol
+      - stocks
+      - indices
+      - etfs
+      - earnings
+      - rates
+      - inflation
+      - commodities
+      - fx
+      - jobs
+      - ai
+      - companies
+      - other
   responses:
-    InternalError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
     BadRequest:
       description: Validation error
       content:
@@ -522,6 +516,12 @@ components:
             error:
               code: NOT_FOUND
               message: Resource not found
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
   parameters:
     CursorParam:
       name: cursor

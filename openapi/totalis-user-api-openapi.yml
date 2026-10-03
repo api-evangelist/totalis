@@ -610,6 +610,101 @@ paths:
                             - submitted_unconfirmed
 components:
   schemas:
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type:
+          - integer
+          - 'null'
+          description: Seconds until retry; set on 429 responses.
+    PortfolioSummary:
+      type: object
+      description: Derived portfolio-level aggregates from active positions.
+      properties:
+        active_count:
+          type: integer
+          description: Number of active (non-terminal) RFQs
+        active_bet_total:
+          type: number
+          description: Sum of bet_amount across active RFQs
+        portfolio_value:
+          type: number
+          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Privy DID — internal identifier, not exposed on public endpoints.
+        username:
+          type: string
+          description: Display name. Auto-set to the wallet address on first login; can be updated via `PUT /v1/username` to a 3-20 char alphanumeric.
+        email:
+          type:
+          - string
+          - 'null'
+        wallet_address:
+          type:
+          - string
+          - 'null'
+        approved:
+          type: boolean
+          description: True once the user has redeemed a valid invite code or has been admin-approved.
+        waitlisted:
+          type: boolean
+          description: True when `approved=false` and the user is on the waitlist; false otherwise. Always present.
+        auto_redeemed:
+          type: boolean
+          description: Only present when the `?ref` param successfully redeemed an invite code in this exact request.
+        airdrop:
+          description: 'Welcome-airdrop outcome from the auto-redeem path. Present alongside `auto_redeemed: true`. `null` when the invite has no airdrop configured or the user was already credited.'
+          allOf:
+          - $ref: '#/components/schemas/AirdropOutcome'
+        created_at:
+          type: string
+          format: date-time
+    UserStats:
+      type: object
+      properties:
+        total_parlays:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        total_wagered:
+          type: number
+        realized_pnl:
+          type: number
+        updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Null when the user has never settled a trade (no rfq.user_stats row yet).
     AirdropDrainOutcome:
       type: object
       description: 'Outcome of the pending-airdrop drain performed by
@@ -640,6 +735,21 @@ components:
         amount:
           type: number
           description: USDC amount (whole dollars)
+    DelegationStatus:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: True if a wallet is linked and delegation can proceed
+        delegated:
+          type: boolean
+          description: True if TEE wallet delegation is active (server can sign)
+        address:
+          type: string
+          description: Solana wallet address (base58). Empty string if no wallet linked.
+        wallet_id:
+          type: string
+          description: Privy embedded wallet ID (used for delegation API calls)
     PortfolioData:
       type: object
       description: Consolidated portfolio response from GET /v1/portfolio.
@@ -654,6 +764,35 @@ components:
           $ref: '#/components/schemas/RfqCounts'
         summary:
           $ref: '#/components/schemas/PortfolioSummary'
+    PortfolioBalance:
+      type: object
+      description: 'Caller''s vault balance (DB-cached, no RPC). Null only when the
+
+        caller has no vault row at all. For dual-role accounts the
+
+        bettor-side vault is preferred and the maker-side row is used
+
+        as a fallback (same rules as `GET /v1/vault`).
+
+        '
+      properties:
+        gross_balance:
+          type: number
+        locked_collateral:
+          type: number
+        free_balance:
+          type: number
+        vault_pda:
+          type: string
+        vault_token_account:
+          type: string
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
     AirdropOutcome:
       type: object
       description: 'Welcome airdrop outcome. `success: true` with `pending: true` means the amount was staged and will mint on the user''s next `POST /v1/wallet/enable-trading` call. `success: false` means staging failed.'
@@ -669,19 +808,6 @@ components:
           description: USDC (whole dollars).
         pending:
           type: boolean
-    PortfolioSummary:
-      type: object
-      description: Derived portfolio-level aggregates from active positions.
-      properties:
-        active_count:
-          type: integer
-          description: Number of active (non-terminal) RFQs
-        active_bet_total:
-          type: number
-          description: Sum of bet_amount across active RFQs
-        portfolio_value:
-          type: number
-          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
     Wallet:
       type: object
       properties:
@@ -726,145 +852,9 @@ components:
         total_failed:
           type: integer
           description: Parlays where the vault position errored on-chain. Derived from vault_positions.status = 'error'.
-    ErrorBody:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          enum:
-          - VALIDATION_ERROR
-          - UNAUTHORIZED
-          - FORBIDDEN
-          - NOT_FOUND
-          - CONFLICT
-          - RATE_LIMITED
-          - PAYLOAD_TOO_LARGE
-          - INTERNAL_ERROR
-          - SERVICE_UNAVAILABLE
-          description: Machine-readable error code.
-        message:
-          type: string
-          description: Human-readable error message.
-        details:
-          type: object
-          description: Additional error context.
-        retry_after:
-          type:
-          - integer
-          - 'null'
-          description: Seconds until retry; set on 429 responses.
-    PortfolioBalance:
-      type: object
-      description: 'Caller''s vault balance (DB-cached, no RPC). Null only when the
-
-        caller has no vault row at all. For dual-role accounts the
-
-        bettor-side vault is preferred and the maker-side row is used
-
-        as a fallback (same rules as `GET /v1/vault`).
-
-        '
-      properties:
-        gross_balance:
-          type: number
-        locked_collateral:
-          type: number
-        free_balance:
-          type: number
-        vault_pda:
-          type: string
-        vault_token_account:
-          type: string
-    UserStats:
-      type: object
-      properties:
-        total_parlays:
-          type: integer
-        wins:
-          type: integer
-        losses:
-          type: integer
-        total_wagered:
-          type: number
-        realized_pnl:
-          type: number
-        updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Null when the user has never settled a trade (no rfq.user_stats row yet).
-    DelegationStatus:
-      type: object
-      properties:
-        ready:
-          type: boolean
-          description: True if a wallet is linked and delegation can proceed
-        delegated:
-          type: boolean
-          description: True if TEE wallet delegation is active (server can sign)
-        address:
-          type: string
-          description: Solana wallet address (base58). Empty string if no wallet linked.
-        wallet_id:
-          type: string
-          description: Privy embedded wallet ID (used for delegation API calls)
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Privy DID — internal identifier, not exposed on public endpoints.
-        username:
-          type: string
-          description: Display name. Auto-set to the wallet address on first login; can be updated via `PUT /v1/username` to a 3-20 char alphanumeric.
-        email:
-          type:
-          - string
-          - 'null'
-        wallet_address:
-          type:
-          - string
-          - 'null'
-        approved:
-          type: boolean
-          description: True once the user has redeemed a valid invite code or has been admin-approved.
-        waitlisted:
-          type: boolean
-          description: True when `approved=false` and the user is on the waitlist; false otherwise. Always present.
-        auto_redeemed:
-          type: boolean
-          description: Only present when the `?ref` param successfully redeemed an invite code in this exact request.
-        airdrop:
-          description: 'Welcome-airdrop outcome from the auto-redeem path. Present alongside `auto_redeemed: true`. `null` when the invite has no airdrop configured or the user was already credited.'
-          allOf:
-          - $ref: '#/components/schemas/AirdropOutcome'
-        created_at:
-          type: string
-          format: date-time
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
   responses:
-    Unauthorized:
-      description: Missing or invalid authentication
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-          example:
-            error:
-              code: UNAUTHORIZED
-              message: Missing or invalid authentication
-    InternalError:
-      description: Internal server error
+    Conflict:
+      description: Resource conflict (duplicate, already taken, invalid status transition, etc.)
       content:
         application/json:
           schema:
@@ -881,8 +871,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
-    Conflict:
-      description: Resource conflict (duplicate, already taken, invalid status transition, etc.)
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Missing or invalid authentication
+    InternalError:
+      description: Internal server error
       content:
         application/json:
           schema:

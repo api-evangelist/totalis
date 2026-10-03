@@ -92,17 +92,238 @@ paths:
           $ref: '#/components/responses/NotFound'
 components:
   schemas:
-    QuoteStatus:
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type:
+          - integer
+          - 'null'
+          description: Seconds until retry; set on 429 responses.
+    PaginationMeta:
+      type: object
+      properties:
+        cursor:
+          type:
+          - string
+          - 'null'
+        has_more:
+          type: boolean
+        limit:
+          type: integer
+          description: Maximum number of items requested for this page.
+        offset:
+          type: integer
+          description: Number of items skipped before this page.
+        total:
+          type: integer
+          description: Total number of items available across all pages, when returned by the endpoint.
+    Cashout:
+      type: object
+      description: 'Early-cashout (buyback) summary attached to a bought_back RFQ — the
+
+        buyback analogue of Settlement. realized_pnl is the user''s net P&L
+
+        (stake nets out; the directional `amount` is the realized delta, less
+
+        the profit fee on the profiting side and the create-time taker fee).
+
+        '
+      required:
+      - realized_pnl
+      - amount
+      - mm_pays_user
+      properties:
+        realized_pnl:
+          type: number
+          description: User's realized P&L from the early cashout (USDC, signed).
+        amount:
+          type: number
+          description: Directional buyback transfer (USDC, >= 0).
+        mm_pays_user:
+          type: boolean
+          description: True when the MM paid the user (user was up on the position).
+        cashed_out_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Time the position was bought back / cashed out (the buyback fee insert = finalize moment). The buyback analogue of settled_at; clients sort the History cashed-out row by this. Absent on legacy rows without a fee.
+    Quote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        rfq_id:
+          type: string
+          format: uuid
+        payout_odds:
+          type: number
+          minimum: 1.0001
+          maximum: 1000
+          description: Multiplier on the net stake (`user_stake`) that produces the total payout if the parlay wins. When the taker fee is off, `user_stake == bet_amount`.
+        user_cost:
+          type: number
+          description: Net stake the MM quotes on = bet_amount - taker_fee (== bet_amount when the taker fee is off).
+        mm_cost:
+          type: number
+          description: Market maker's max risk = `total_payout - user_cost`.
+        total_payout:
+          type: number
+          description: Total payout on a win = `user_cost + mm_cost`.
+        leg_prices:
+          type: array
+          description: Per-leg price snapshot captured at submit time. `leg_odds` is a decimal (0-1).
+          items:
+            type: object
+            required:
+            - leg_id
+            - leg_odds
+            properties:
+              leg_id:
+                type: string
+                format: uuid
+              leg_odds:
+                type: number
+                description: Implied per-leg price, decimal (0-1).
+        status:
+          $ref: '#/components/schemas/QuoteStatus'
+        valid_until:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PositionStatus:
       type: string
+      description: Vault position lifecycle. `pending`/`processing` are intermediate states before on-chain creation; `settling`/`cancelling` are intermediate states for settlement/cancellation; `settled_win`/`settled_loss`/`cancelled` are terminal; the `*_mm_release` and `expired` states cover the permissionless-expiry path; the buyback path is `active → bought_back_pending_db → bought_back` (with `reconciling_bought_back_db` as the short-lived reconciler sentinel); `error` means retries are exhausted and manual intervention is required.
       enum:
       - pending
+      - processing
+      - active
+      - settling
+      - cancelling
+      - settled_win
+      - settled_loss
+      - cancelled
+      - reconciling_mm_release
+      - expired_pending_mm_release
+      - expired
+      - reconciling_bought_back_db
+      - bought_back_pending_db
+      - bought_back
+      - error
+    WinnerSide:
+      type: string
+      enum:
+      - user
+      - mm
+      description: Winner of a settled parlay position.
+    Side:
+      type: string
+      enum:
+      - 'yes'
+      - 'no'
+      description: Bet side.
+    LegOutcome:
+      type: string
+      enum:
+      - win
+      - loss
+      - push
+      - pending
+    Settlement:
+      type: object
+      required:
+      - id
+      - rfq_id
+      - winner
+      - payout
+      - user_stake
+      - mm_risk
+      - fee_amount
+      - settle_tx
+      - settled_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        rfq_id:
+          type: string
+          format: uuid
+        winner:
+          $ref: '#/components/schemas/WinnerSide'
+        payout:
+          type: number
+          description: 'Full pot transferred to the winner — equals user_stake + mm_risk
+
+            (i.e. bet_amount * payout_odds). NOT just the MM-side movement.
+
+            For MM PnL on a loss, use -(payout - user_stake) = -mm_risk.
+
+            '
+        user_stake:
+          type: number
+          description: 'Bettor''s stake at settle time. Surfaced so the MM dashboard can
+
+            derive PnL without a second fetch — MM win = +user_stake - fee,
+
+            MM loss = -(payout - user_stake) = -mm_risk.
+
+            '
+        mm_risk:
+          type: number
+          description: 'Maker''s max risk at settle time. Equal to payout - user_stake; the
+
+            MM dashboard renders loss-side PnL directly off this field.
+
+            '
+        fee_amount:
+          type: number
+          description: Protocol fee deducted from the winner's payout.
+        settle_tx:
+          type: string
+        settled_at:
+          type: string
+          format: date-time
+    RfqStatus:
+      type: string
+      enum:
+      - open
+      - quoted
       - accepted
       - confirmed
       - executed
-      - rejected
+      - cancelled
       - expired
-      - withdrawn
-      description: Lifecycle status of a quote.
+      - settled
+      - bought_back
     Leg:
       type: object
       properties:
@@ -159,146 +380,30 @@ components:
           description: No ask price at RFQ creation time, decimal probability (0-1)
         outcome:
           $ref: '#/components/schemas/LegOutcome'
-    Cashout:
-      type: object
-      description: 'Early-cashout (buyback) summary attached to a bought_back RFQ — the
-
-        buyback analogue of Settlement. realized_pnl is the user''s net P&L
-
-        (stake nets out; the directional `amount` is the realized delta, less
-
-        the profit fee on the profiting side and the create-time taker fee).
-
-        '
-      required:
-      - realized_pnl
-      - amount
-      - mm_pays_user
-      properties:
-        realized_pnl:
-          type: number
-          description: User's realized P&L from the early cashout (USDC, signed).
-        amount:
-          type: number
-          description: Directional buyback transfer (USDC, >= 0).
-        mm_pays_user:
-          type: boolean
-          description: True when the MM paid the user (user was up on the position).
-        cashed_out_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Time the position was bought back / cashed out (the buyback fee insert = finalize moment). The buyback analogue of settled_at; clients sort the History cashed-out row by this. Absent on legacy rows without a fee.
-    WinnerSide:
+    QuoteStatus:
       type: string
       enum:
-      - user
-      - mm
-      description: Winner of a settled parlay position.
-    RfqStatus:
-      type: string
-      enum:
-      - open
-      - quoted
+      - pending
       - accepted
       - confirmed
       - executed
-      - cancelled
+      - rejected
       - expired
-      - settled
-      - bought_back
+      - withdrawn
+      description: Lifecycle status of a quote.
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
     Venue:
       type: string
       enum:
       - kalshi
       - polymarket
       description: Source venue for a market.
-    LegOutcome:
-      type: string
-      enum:
-      - win
-      - loss
-      - push
-      - pending
-    PaginationMeta:
-      type: object
-      properties:
-        cursor:
-          type:
-          - string
-          - 'null'
-        has_more:
-          type: boolean
-        limit:
-          type: integer
-          description: Maximum number of items requested for this page.
-        offset:
-          type: integer
-          description: Number of items skipped before this page.
-        total:
-          type: integer
-          description: Total number of items available across all pages, when returned by the endpoint.
-    Settlement:
-      type: object
-      required:
-      - id
-      - rfq_id
-      - winner
-      - payout
-      - user_stake
-      - mm_risk
-      - fee_amount
-      - settle_tx
-      - settled_at
-      properties:
-        id:
-          type: string
-          format: uuid
-        rfq_id:
-          type: string
-          format: uuid
-        winner:
-          $ref: '#/components/schemas/WinnerSide'
-        payout:
-          type: number
-          description: 'Full pot transferred to the winner — equals user_stake + mm_risk
-
-            (i.e. bet_amount * payout_odds). NOT just the MM-side movement.
-
-            For MM PnL on a loss, use -(payout - user_stake) = -mm_risk.
-
-            '
-        user_stake:
-          type: number
-          description: 'Bettor''s stake at settle time. Surfaced so the MM dashboard can
-
-            derive PnL without a second fetch — MM win = +user_stake - fee,
-
-            MM loss = -(payout - user_stake) = -mm_risk.
-
-            '
-        mm_risk:
-          type: number
-          description: 'Maker''s max risk at settle time. Equal to payout - user_stake; the
-
-            MM dashboard renders loss-side PnL directly off this field.
-
-            '
-        fee_amount:
-          type: number
-          description: Protocol fee deducted from the winner's payout.
-        settle_tx:
-          type: string
-        settled_at:
-          type: string
-          format: date-time
-    Side:
-      type: string
-      enum:
-      - 'yes'
-      - 'no'
-      description: Bet side.
     Rfq:
       type: object
       properties:
@@ -410,111 +515,6 @@ components:
         expires_at:
           type: string
           format: date-time
-    ErrorBody:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          enum:
-          - VALIDATION_ERROR
-          - UNAUTHORIZED
-          - FORBIDDEN
-          - NOT_FOUND
-          - CONFLICT
-          - RATE_LIMITED
-          - PAYLOAD_TOO_LARGE
-          - INTERNAL_ERROR
-          - SERVICE_UNAVAILABLE
-          description: Machine-readable error code.
-        message:
-          type: string
-          description: Human-readable error message.
-        details:
-          type: object
-          description: Additional error context.
-        retry_after:
-          type:
-          - integer
-          - 'null'
-          description: Seconds until retry; set on 429 responses.
-    PositionStatus:
-      type: string
-      description: Vault position lifecycle. `pending`/`processing` are intermediate states before on-chain creation; `settling`/`cancelling` are intermediate states for settlement/cancellation; `settled_win`/`settled_loss`/`cancelled` are terminal; the `*_mm_release` and `expired` states cover the permissionless-expiry path; the buyback path is `active → bought_back_pending_db → bought_back` (with `reconciling_bought_back_db` as the short-lived reconciler sentinel); `error` means retries are exhausted and manual intervention is required.
-      enum:
-      - pending
-      - processing
-      - active
-      - settling
-      - cancelling
-      - settled_win
-      - settled_loss
-      - cancelled
-      - reconciling_mm_release
-      - expired_pending_mm_release
-      - expired
-      - reconciling_bought_back_db
-      - bought_back_pending_db
-      - bought_back
-      - error
-    Quote:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        rfq_id:
-          type: string
-          format: uuid
-        payout_odds:
-          type: number
-          minimum: 1.0001
-          maximum: 1000
-          description: Multiplier on the net stake (`user_stake`) that produces the total payout if the parlay wins. When the taker fee is off, `user_stake == bet_amount`.
-        user_cost:
-          type: number
-          description: Net stake the MM quotes on = bet_amount - taker_fee (== bet_amount when the taker fee is off).
-        mm_cost:
-          type: number
-          description: Market maker's max risk = `total_payout - user_cost`.
-        total_payout:
-          type: number
-          description: Total payout on a win = `user_cost + mm_cost`.
-        leg_prices:
-          type: array
-          description: Per-leg price snapshot captured at submit time. `leg_odds` is a decimal (0-1).
-          items:
-            type: object
-            required:
-            - leg_id
-            - leg_odds
-            properties:
-              leg_id:
-                type: string
-                format: uuid
-              leg_odds:
-                type: number
-                description: Implied per-leg price, decimal (0-1).
-        status:
-          $ref: '#/components/schemas/QuoteStatus'
-        valid_until:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
   parameters:
     CursorParam:
       name: cursor
