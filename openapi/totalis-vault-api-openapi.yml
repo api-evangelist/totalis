@@ -36,6 +36,25 @@ paths:
                     - $ref: '#/components/schemas/UserVaultResponse'
 components:
   schemas:
+    PositionStatus:
+      type: string
+      description: Vault position lifecycle. `pending`/`processing` are intermediate states before on-chain creation; `settling`/`cancelling` are intermediate states for settlement/cancellation; `settled_win`/`settled_loss`/`cancelled` are terminal; the `*_mm_release` and `expired` states cover the permissionless-expiry path; the buyback path is `active → bought_back_pending_db → bought_back` (with `reconciling_bought_back_db` as the short-lived reconciler sentinel); `error` means retries are exhausted and manual intervention is required.
+      enum:
+      - pending
+      - processing
+      - active
+      - settling
+      - cancelling
+      - settled_win
+      - settled_loss
+      - cancelled
+      - reconciling_mm_release
+      - expired_pending_mm_release
+      - expired
+      - reconciling_bought_back_db
+      - bought_back_pending_db
+      - bought_back
+      - error
     UserVaultResponse:
       type: object
       description: 'Vault state with active position summaries (GET /v1/vault response).
@@ -124,25 +143,6 @@ components:
         created_at:
           type: string
           format: date-time
-    PositionStatus:
-      type: string
-      description: Vault position lifecycle. `pending`/`processing` are intermediate states before on-chain creation; `settling`/`cancelling` are intermediate states for settlement/cancellation; `settled_win`/`settled_loss`/`cancelled` are terminal; the `*_mm_release` and `expired` states cover the permissionless-expiry path; the buyback path is `active → bought_back_pending_db → bought_back` (with `reconciling_bought_back_db` as the short-lived reconciler sentinel); `error` means retries are exhausted and manual intervention is required.
-      enum:
-      - pending
-      - processing
-      - active
-      - settling
-      - cancelling
-      - settled_win
-      - settled_loss
-      - cancelled
-      - reconciling_mm_release
-      - expired_pending_mm_release
-      - expired
-      - reconciling_bought_back_db
-      - bought_back_pending_db
-      - bought_back
-      - error
   securitySchemes:
     PrivyJWT:
       type: http

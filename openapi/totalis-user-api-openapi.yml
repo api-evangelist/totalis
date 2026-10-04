@@ -610,49 +610,6 @@ paths:
                             - submitted_unconfirmed
 components:
   schemas:
-    ErrorBody:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          enum:
-          - VALIDATION_ERROR
-          - UNAUTHORIZED
-          - FORBIDDEN
-          - NOT_FOUND
-          - CONFLICT
-          - RATE_LIMITED
-          - PAYLOAD_TOO_LARGE
-          - INTERNAL_ERROR
-          - SERVICE_UNAVAILABLE
-          description: Machine-readable error code.
-        message:
-          type: string
-          description: Human-readable error message.
-        details:
-          type: object
-          description: Additional error context.
-        retry_after:
-          type:
-          - integer
-          - 'null'
-          description: Seconds until retry; set on 429 responses.
-    PortfolioSummary:
-      type: object
-      description: Derived portfolio-level aggregates from active positions.
-      properties:
-        active_count:
-          type: integer
-          description: Number of active (non-terminal) RFQs
-        active_bet_total:
-          type: number
-          description: Sum of bet_amount across active RFQs
-        portfolio_value:
-          type: number
-          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
     User:
       type: object
       properties:
@@ -686,6 +643,50 @@ components:
         created_at:
           type: string
           format: date-time
+    RfqCounts:
+      type: object
+      properties:
+        open:
+          type: integer
+        quoted:
+          type: integer
+        accepted:
+          type: integer
+        confirmed:
+          type: integer
+        executed:
+          type: integer
+          description: Positions on-chain but not yet resolved. Distinct from total_settled — settled means market resolution + payout distributed.
+        total_settled:
+          type: integer
+        total_cancelled:
+          type: integer
+        total_expired:
+          type: integer
+        total_failed:
+          type: integer
+          description: Parlays where the vault position errored on-chain. Derived from vault_positions.status = 'error'.
+    Wallet:
+      type: object
+      properties:
+        address:
+          type:
+          - string
+          - 'null'
+          description: Solana wallet address (base58). Null if no wallet is linked yet.
+        sol_balance:
+          type: number
+        usdc_balance:
+          type: number
+        vault_balance:
+          type: number
+          description: Gross USDC balance currently held in the caller's Totalis vault. Resolved by the returned `address`; returns 0 when no vault row exists for that wallet. Includes both free vault cash and locked collateral. Add to `usdc_balance` for total on-chain USDC across wallet and vault; subtract `locked_amount` from that total for an available-cash view.
+        locked_amount:
+          type: number
+          description: 'Every USDC the caller has committed across roles: in-flight RFQs, bettor-side vault position stakes, and maker-side `locked_collateral`. Because `vault_balance` is gross, vault locked collateral is intentionally represented in both `vault_balance` and `locked_amount`; compute available cash as `usdc_balance + vault_balance - locked_amount` and do not add `/v1/vault.locked_collateral` again.'
+        has_traded:
+          type: boolean
+          description: True once any of the caller's parlays has reached `executed` or `settled`. Informational account state; withdrawals are allowed regardless of this value.
     UserStats:
       type: object
       properties:
@@ -705,6 +706,33 @@ components:
           - 'null'
           format: date-time
           description: Null when the user has never settled a trade (no rfq.user_stats row yet).
+    PortfolioSummary:
+      type: object
+      description: Derived portfolio-level aggregates from active positions.
+      properties:
+        active_count:
+          type: integer
+          description: Number of active (non-terminal) RFQs
+        active_bet_total:
+          type: number
+          description: Sum of bet_amount across active RFQs
+        portfolio_value:
+          type: number
+          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
+    PortfolioData:
+      type: object
+      description: Consolidated portfolio response from GET /v1/portfolio.
+      properties:
+        balance:
+          description: Null when user has no vault (never traded)
+          allOf:
+          - $ref: '#/components/schemas/PortfolioBalance'
+        stats:
+          $ref: '#/components/schemas/UserStats'
+        counts:
+          $ref: '#/components/schemas/RfqCounts'
+        summary:
+          $ref: '#/components/schemas/PortfolioSummary'
     AirdropDrainOutcome:
       type: object
       description: 'Outcome of the pending-airdrop drain performed by
@@ -735,6 +763,43 @@ components:
         amount:
           type: number
           description: USDC amount (whole dollars)
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type:
+          - integer
+          - 'null'
+          description: Seconds until retry; set on 429 responses.
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
     DelegationStatus:
       type: object
       properties:
@@ -750,20 +815,6 @@ components:
         wallet_id:
           type: string
           description: Privy embedded wallet ID (used for delegation API calls)
-    PortfolioData:
-      type: object
-      description: Consolidated portfolio response from GET /v1/portfolio.
-      properties:
-        balance:
-          description: Null when user has no vault (never traded)
-          allOf:
-          - $ref: '#/components/schemas/PortfolioBalance'
-        stats:
-          $ref: '#/components/schemas/UserStats'
-        counts:
-          $ref: '#/components/schemas/RfqCounts'
-        summary:
-          $ref: '#/components/schemas/PortfolioSummary'
     PortfolioBalance:
       type: object
       description: 'Caller''s vault balance (DB-cached, no RPC). Null only when the
@@ -786,13 +837,6 @@ components:
           type: string
         vault_token_account:
           type: string
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
     AirdropOutcome:
       type: object
       description: 'Welcome airdrop outcome. `success: true` with `pending: true` means the amount was staged and will mint on the user''s next `POST /v1/wallet/enable-trading` call. `success: false` means staging failed.'
@@ -808,59 +852,9 @@ components:
           description: USDC (whole dollars).
         pending:
           type: boolean
-    Wallet:
-      type: object
-      properties:
-        address:
-          type:
-          - string
-          - 'null'
-          description: Solana wallet address (base58). Null if no wallet is linked yet.
-        sol_balance:
-          type: number
-        usdc_balance:
-          type: number
-        vault_balance:
-          type: number
-          description: Gross USDC balance currently held in the caller's Totalis vault. Resolved by the returned `address`; returns 0 when no vault row exists for that wallet. Includes both free vault cash and locked collateral. Add to `usdc_balance` for total on-chain USDC across wallet and vault; subtract `locked_amount` from that total for an available-cash view.
-        locked_amount:
-          type: number
-          description: 'Every USDC the caller has committed across roles: in-flight RFQs, bettor-side vault position stakes, and maker-side `locked_collateral`. Because `vault_balance` is gross, vault locked collateral is intentionally represented in both `vault_balance` and `locked_amount`; compute available cash as `usdc_balance + vault_balance - locked_amount` and do not add `/v1/vault.locked_collateral` again.'
-        has_traded:
-          type: boolean
-          description: True once any of the caller's parlays has reached `executed` or `settled`. Informational account state; withdrawals are allowed regardless of this value.
-    RfqCounts:
-      type: object
-      properties:
-        open:
-          type: integer
-        quoted:
-          type: integer
-        accepted:
-          type: integer
-        confirmed:
-          type: integer
-        executed:
-          type: integer
-          description: Positions on-chain but not yet resolved. Distinct from total_settled — settled means market resolution + payout distributed.
-        total_settled:
-          type: integer
-        total_cancelled:
-          type: integer
-        total_expired:
-          type: integer
-        total_failed:
-          type: integer
-          description: Parlays where the vault position errored on-chain. Derived from vault_positions.status = 'error'.
   responses:
-    Conflict:
-      description: Resource conflict (duplicate, already taken, invalid status transition, etc.)
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-    RateLimited:
-      description: Rate limit exceeded
+    InternalError:
+      description: Internal server error
       content:
         application/json:
           schema:
@@ -881,8 +875,14 @@ components:
             error:
               code: UNAUTHORIZED
               message: Missing or invalid authentication
-    InternalError:
-      description: Internal server error
+    Conflict:
+      description: Resource conflict (duplicate, already taken, invalid status transition, etc.)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Rate limit exceeded
       content:
         application/json:
           schema:

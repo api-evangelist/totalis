@@ -278,36 +278,12 @@ paths:
           $ref: '#/components/responses/NotFound'
 components:
   schemas:
-    ErrorBody:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          enum:
-          - VALIDATION_ERROR
-          - UNAUTHORIZED
-          - FORBIDDEN
-          - NOT_FOUND
-          - CONFLICT
-          - RATE_LIMITED
-          - PAYLOAD_TOO_LARGE
-          - INTERNAL_ERROR
-          - SERVICE_UNAVAILABLE
-          description: Machine-readable error code.
-        message:
-          type: string
-          description: Human-readable error message.
-        details:
-          type: object
-          description: Additional error context.
-        retry_after:
-          type:
-          - integer
-          - 'null'
-          description: Seconds until retry; set on 429 responses.
+    Venue:
+      type: string
+      enum:
+      - kalshi
+      - polymarket
+      description: Source venue for a market.
     PaginationMeta:
       type: object
       properties:
@@ -365,12 +341,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Market'
-    Venue:
-      type: string
-      enum:
-      - kalshi
-      - polymarket
-      description: Source venue for a market.
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - CONFLICT
+          - RATE_LIMITED
+          - PAYLOAD_TOO_LARGE
+          - INTERNAL_ERROR
+          - SERVICE_UNAVAILABLE
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        details:
+          type: object
+          description: Additional error context.
+        retry_after:
+          type:
+          - integer
+          - 'null'
+          description: Seconds until retry; set on 429 responses.
     Market:
       type: object
       properties:
@@ -500,6 +500,12 @@ components:
       - companies
       - other
   responses:
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
     BadRequest:
       description: Validation error
       content:
@@ -516,12 +522,6 @@ components:
             error:
               code: NOT_FOUND
               message: Resource not found
-    InternalError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
   parameters:
     CursorParam:
       name: cursor

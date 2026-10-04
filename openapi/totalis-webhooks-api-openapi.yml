@@ -196,7 +196,48 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 components:
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
   schemas:
+    WebhookDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - failed
+          - delivered
+          - dead_letter
+        attempts:
+          type: integer
+        response_code:
+          type:
+          - integer
+          - 'null'
+        created_at:
+          type: string
+          format: date-time
     ErrorBody:
       type: object
       required:
@@ -227,37 +268,6 @@ components:
           - integer
           - 'null'
           description: Seconds until retry; set on 429 responses.
-    WebhookDelivery:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        event_type:
-          type: string
-        status:
-          type: string
-          enum:
-          - pending
-          - failed
-          - delivered
-          - dead_letter
-        attempts:
-          type: integer
-        response_code:
-          type:
-          - integer
-          - 'null'
-        created_at:
-          type: string
-          format: date-time
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
     WebhookConfigInput:
       type: object
       required:
@@ -272,6 +282,13 @@ components:
           items:
             type: string
           description: Event names to subscribe to (subset of the catalog). Empty parks the endpoint.
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
     WebhookConfig:
       type: object
       properties:
@@ -303,23 +320,6 @@ components:
           items:
             type: string
           description: The events this endpoint kind may subscribe to. (GET only.)
-  responses:
-    BadRequest:
-      description: Validation error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-          example:
-            error:
-              code: NOT_FOUND
-              message: Resource not found
   securitySchemes:
     PrivyJWT:
       type: http
