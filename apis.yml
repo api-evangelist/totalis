@@ -59,6 +59,8 @@ tags:
 - Market Data
 - Webhook
 - Real-Time
+- Web3
+- Cryptocurrency
 tags_raw:
 - Company
 - Prediction Markets
@@ -71,6 +73,8 @@ tags_raw:
 - Market Data
 - Webhooks
 - Real-Time
+- Web3
+- Cryptocurrency
 apis:
 - aid: totalis:totalis-api-keys-api
   name: Totalis API Keys API
@@ -166,6 +170,9 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: CapabilityMap
+  url: capabilities/totalis-capability-edges.yml
+  name: Totalis Business Capability Map
 - type: Overlay
   url: overlays/totalis-rfq-overlay.yaml
 - type: Website
