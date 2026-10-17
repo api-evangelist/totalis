@@ -97,32 +97,6 @@ paths:
           $ref: '#/components/responses/NotFound'
 components:
   schemas:
-    ApiKeySummary:
-      type: object
-      properties:
-        key_prefix:
-          type: string
-        name:
-          type: string
-        status:
-          type: string
-          enum:
-          - active
-          - revoked
-          - expired
-        created_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
-        last_used_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        request_count:
-          type: integer
     ApiKeyFull:
       type: object
       description: Returned only on creation; the full `key` is visible exactly once.
@@ -140,6 +114,13 @@ components:
         expires_at:
           type: string
           format: date-time
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
     ErrorBody:
       type: object
       required:
@@ -170,24 +151,33 @@ components:
           - integer
           - 'null'
           description: Seconds until retry; set on 429 responses.
-    ErrorEnvelope:
+    ApiKeySummary:
       type: object
-      required:
-      - error
       properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
+        key_prefix:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - revoked
+          - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        request_count:
+          type: integer
   responses:
-    Unauthorized:
-      description: Missing or invalid authentication
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-          example:
-            error:
-              code: UNAUTHORIZED
-              message: Missing or invalid authentication
     NotFound:
       description: Resource not found
       content:
@@ -198,6 +188,16 @@ components:
             error:
               code: NOT_FOUND
               message: Resource not found
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Missing or invalid authentication
   securitySchemes:
     PrivyJWT:
       type: http

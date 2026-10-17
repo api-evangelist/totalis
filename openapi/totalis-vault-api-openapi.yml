@@ -55,38 +55,6 @@ components:
       - bought_back_pending_db
       - bought_back
       - error
-    UserVaultResponse:
-      type: object
-      description: 'Vault state with active position summaries (GET /v1/vault response).
-
-        Returns the caller''s bettor-side vault (owner_type=''user'') when one
-
-        exists; falls back to their maker-side vault (owner_type=''mm'') for
-
-        pure-MM accounts so the portfolio surface reflects every USDC the
-
-        caller controls. `positions` is the bettor-side active list when
-
-        returning the user vault, or the maker-side active list (joined via
-
-        `q.market_maker_id`) when returning the MM vault.
-
-        '
-      properties:
-        vault_pda:
-          type: string
-        vault_token_account:
-          type: string
-        gross_balance:
-          type: number
-        locked_collateral:
-          type: number
-        free_balance:
-          type: number
-        positions:
-          type: array
-          items:
-            $ref: '#/components/schemas/VaultPositionSummary'
     VaultPositionSummary:
       type: object
       description: 'Lightweight position summary for the vault response.
@@ -143,6 +111,38 @@ components:
         created_at:
           type: string
           format: date-time
+    UserVaultResponse:
+      type: object
+      description: 'Vault state with active position summaries (GET /v1/vault response).
+
+        Returns the caller''s bettor-side vault (owner_type=''user'') when one
+
+        exists; falls back to their maker-side vault (owner_type=''mm'') for
+
+        pure-MM accounts so the portfolio surface reflects every USDC the
+
+        caller controls. `positions` is the bettor-side active list when
+
+        returning the user vault, or the maker-side active list (joined via
+
+        `q.market_maker_id`) when returning the MM vault.
+
+        '
+      properties:
+        vault_pda:
+          type: string
+        vault_token_account:
+          type: string
+        gross_balance:
+          type: number
+        locked_collateral:
+          type: number
+        free_balance:
+          type: number
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaultPositionSummary'
   securitySchemes:
     PrivyJWT:
       type: http

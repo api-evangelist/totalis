@@ -610,6 +610,39 @@ paths:
                             - submitted_unconfirmed
 components:
   schemas:
+    PortfolioData:
+      type: object
+      description: Consolidated portfolio response from GET /v1/portfolio.
+      properties:
+        balance:
+          description: Null when user has no vault (never traded)
+          allOf:
+          - $ref: '#/components/schemas/PortfolioBalance'
+        stats:
+          $ref: '#/components/schemas/UserStats'
+        counts:
+          $ref: '#/components/schemas/RfqCounts'
+        summary:
+          $ref: '#/components/schemas/PortfolioSummary'
+    UserStats:
+      type: object
+      properties:
+        total_parlays:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        total_wagered:
+          type: number
+        realized_pnl:
+          type: number
+        updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Null when the user has never settled a trade (no rfq.user_stats row yet).
     User:
       type: object
       properties:
@@ -666,73 +699,21 @@ components:
         total_failed:
           type: integer
           description: Parlays where the vault position errored on-chain. Derived from vault_positions.status = 'error'.
-    Wallet:
+    AirdropOutcome:
       type: object
+      description: 'Welcome airdrop outcome. `success: true` with `pending: true` means the amount was staged and will mint on the user''s next `POST /v1/wallet/enable-trading` call. `success: false` means staging failed.'
+      required:
+      - success
+      - amount
+      - pending
       properties:
-        address:
-          type:
-          - string
-          - 'null'
-          description: Solana wallet address (base58). Null if no wallet is linked yet.
-        sol_balance:
-          type: number
-        usdc_balance:
-          type: number
-        vault_balance:
-          type: number
-          description: Gross USDC balance currently held in the caller's Totalis vault. Resolved by the returned `address`; returns 0 when no vault row exists for that wallet. Includes both free vault cash and locked collateral. Add to `usdc_balance` for total on-chain USDC across wallet and vault; subtract `locked_amount` from that total for an available-cash view.
-        locked_amount:
-          type: number
-          description: 'Every USDC the caller has committed across roles: in-flight RFQs, bettor-side vault position stakes, and maker-side `locked_collateral`. Because `vault_balance` is gross, vault locked collateral is intentionally represented in both `vault_balance` and `locked_amount`; compute available cash as `usdc_balance + vault_balance - locked_amount` and do not add `/v1/vault.locked_collateral` again.'
-        has_traded:
+        success:
           type: boolean
-          description: True once any of the caller's parlays has reached `executed` or `settled`. Informational account state; withdrawals are allowed regardless of this value.
-    UserStats:
-      type: object
-      properties:
-        total_parlays:
-          type: integer
-        wins:
-          type: integer
-        losses:
-          type: integer
-        total_wagered:
+        amount:
           type: number
-        realized_pnl:
-          type: number
-        updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Null when the user has never settled a trade (no rfq.user_stats row yet).
-    PortfolioSummary:
-      type: object
-      description: Derived portfolio-level aggregates from active positions.
-      properties:
-        active_count:
-          type: integer
-          description: Number of active (non-terminal) RFQs
-        active_bet_total:
-          type: number
-          description: Sum of bet_amount across active RFQs
-        portfolio_value:
-          type: number
-          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
-    PortfolioData:
-      type: object
-      description: Consolidated portfolio response from GET /v1/portfolio.
-      properties:
-        balance:
-          description: Null when user has no vault (never traded)
-          allOf:
-          - $ref: '#/components/schemas/PortfolioBalance'
-        stats:
-          $ref: '#/components/schemas/UserStats'
-        counts:
-          $ref: '#/components/schemas/RfqCounts'
-        summary:
-          $ref: '#/components/schemas/PortfolioSummary'
+          description: USDC (whole dollars).
+        pending:
+          type: boolean
     AirdropDrainOutcome:
       type: object
       description: 'Outcome of the pending-airdrop drain performed by
@@ -763,6 +744,62 @@ components:
         amount:
           type: number
           description: USDC amount (whole dollars)
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    DelegationStatus:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: True if a wallet is linked and delegation can proceed
+        delegated:
+          type: boolean
+          description: True if TEE wallet delegation is active (server can sign)
+        address:
+          type: string
+          description: Solana wallet address (base58). Empty string if no wallet linked.
+        wallet_id:
+          type: string
+          description: Privy embedded wallet ID (used for delegation API calls)
+    Wallet:
+      type: object
+      properties:
+        address:
+          type:
+          - string
+          - 'null'
+          description: Solana wallet address (base58). Null if no wallet is linked yet.
+        sol_balance:
+          type: number
+        usdc_balance:
+          type: number
+        vault_balance:
+          type: number
+          description: Gross USDC balance currently held in the caller's Totalis vault. Resolved by the returned `address`; returns 0 when no vault row exists for that wallet. Includes both free vault cash and locked collateral. Add to `usdc_balance` for total on-chain USDC across wallet and vault; subtract `locked_amount` from that total for an available-cash view.
+        locked_amount:
+          type: number
+          description: 'Every USDC the caller has committed across roles: in-flight RFQs, bettor-side vault position stakes, and maker-side `locked_collateral`. Because `vault_balance` is gross, vault locked collateral is intentionally represented in both `vault_balance` and `locked_amount`; compute available cash as `usdc_balance + vault_balance - locked_amount` and do not add `/v1/vault.locked_collateral` again.'
+        has_traded:
+          type: boolean
+          description: True once any of the caller's parlays has reached `executed` or `settled`. Informational account state; withdrawals are allowed regardless of this value.
+    PortfolioSummary:
+      type: object
+      description: Derived portfolio-level aggregates from active positions.
+      properties:
+        active_count:
+          type: integer
+          description: Number of active (non-terminal) RFQs
+        active_bet_total:
+          type: number
+          description: Sum of bet_amount across active RFQs
+        portfolio_value:
+          type: number
+          description: Gross vault balance (deposited USDC). Does not include unrealized P&L.
     ErrorBody:
       type: object
       required:
@@ -793,28 +830,6 @@ components:
           - integer
           - 'null'
           description: Seconds until retry; set on 429 responses.
-    ErrorEnvelope:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorBody'
-    DelegationStatus:
-      type: object
-      properties:
-        ready:
-          type: boolean
-          description: True if a wallet is linked and delegation can proceed
-        delegated:
-          type: boolean
-          description: True if TEE wallet delegation is active (server can sign)
-        address:
-          type: string
-          description: Solana wallet address (base58). Empty string if no wallet linked.
-        wallet_id:
-          type: string
-          description: Privy embedded wallet ID (used for delegation API calls)
     PortfolioBalance:
       type: object
       description: 'Caller''s vault balance (DB-cached, no RPC). Null only when the
@@ -837,28 +852,7 @@ components:
           type: string
         vault_token_account:
           type: string
-    AirdropOutcome:
-      type: object
-      description: 'Welcome airdrop outcome. `success: true` with `pending: true` means the amount was staged and will mint on the user''s next `POST /v1/wallet/enable-trading` call. `success: false` means staging failed.'
-      required:
-      - success
-      - amount
-      - pending
-      properties:
-        success:
-          type: boolean
-        amount:
-          type: number
-          description: USDC (whole dollars).
-        pending:
-          type: boolean
   responses:
-    InternalError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
     BadRequest:
       description: Validation error
       content:
@@ -883,6 +877,12 @@ components:
             $ref: '#/components/schemas/ErrorEnvelope'
     RateLimited:
       description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InternalError:
+      description: Internal server error
       content:
         application/json:
           schema:
